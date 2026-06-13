@@ -61,7 +61,7 @@ function HeroSearch() {
       <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-accent-500/10 rounded-full" />
       <div className="relative">
         <h1 className="text-2xl md:text-4xl font-extrabold mb-2 tracking-tight">
-          Find your next job across Haryana
+          Find your next job
         </h1>
         <p className="text-primary-100 mb-6 text-sm md:text-base">
           Search openings from medical labs, manufacturing, logistics, IT and more — all in one place.
