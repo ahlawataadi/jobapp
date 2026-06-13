@@ -1,0 +1,158 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { api } from "../api/axios.js";
+
+const inputCls =
+  "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
+
+export default function Register() {
+  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "seeker", channel: "email" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/register", form);
+      navigate("/verify-otp", { state: { userId: data.userId, channel: data.channel, devOtp: data.devOtp } });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-card-hover border border-gray-100">
+        <div className="text-center mb-6">
+          <span className="inline-flex bg-primary-600 text-white w-12 h-12 rounded-xl items-center justify-center font-bold text-xl mb-3">
+            H
+          </span>
+          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
+          <p className="text-sm text-gray-500 mt-1">Join Haryana Job Marketplace today</p>
+        </div>
+        {error && (
+          <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Full name</label>
+            <input
+              placeholder="Your name"
+              required
+              className={inputCls}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              required
+              className={inputCls}
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
+            <input
+              placeholder="10-digit mobile number"
+              className={inputCls}
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
+          {form.phone && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Send verification code via</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { v: "email", label: "Email" },
+                  { v: "phone", label: "SMS" },
+                ].map((opt) => (
+                  <label
+                    key={opt.v}
+                    className={`flex items-center justify-center gap-2 border rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                      form.channel === opt.v
+                        ? "border-primary-500 bg-primary-50 text-primary-700"
+                        : "border-gray-300 text-gray-600 hover:border-primary-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="channel"
+                      className="accent-primary-600"
+                      checked={form.channel === opt.v}
+                      onChange={() => setForm({ ...form, channel: opt.v })}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="At least 6 characters"
+              required
+              minLength={6}
+              className={inputCls}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">I am a</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { v: "seeker", label: "Job Seeker" },
+                { v: "vendor", label: "Vendor / Employer" },
+              ].map((opt) => (
+                <label
+                  key={opt.v}
+                  className={`flex items-center justify-center gap-2 border rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                    form.role === opt.v
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-300 text-gray-600 hover:border-primary-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    className="accent-primary-600"
+                    checked={form.role === opt.v}
+                    onChange={() => setForm({ ...form, role: opt.v })}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <button
+            disabled={loading}
+            className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-2.5 rounded-lg font-semibold transition-colors"
+          >
+            {loading ? "Creating account..." : "Sign up"}
+          </button>
+        </form>
+        <p className="text-sm text-gray-600 mt-4 text-center">
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary-700 font-semibold hover:underline">
+            Log in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

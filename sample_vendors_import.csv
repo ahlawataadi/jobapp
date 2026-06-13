@@ -1,0 +1,5 @@
+name,email,password,phone,orgName,industry,address,district,status
+Manoj Kumar,manoj@apexdiagnostics.example,Passw0rd!,9820000001,Apex Diagnostics,Healthcare,SCO 45 Sector 14,Gurugram,active
+Pooja Rani,pooja@suncast-manufacturing.example,Passw0rd!,9820000002,Suncast Manufacturing,Manufacturing,Plot 12 Industrial Area,Faridabad,active
+Deepak Chauhan,deepak@swiftlogix.example,Passw0rd!,9820000003,SwiftLogix Transport,Logistics,Near Bus Stand,Hisar,pending
+Ritu Bansal,ritu@codestreamit.example,Passw0rd!,9820000004,CodeStream IT Services,IT,Tower B Cyber Park,Gurugram,active

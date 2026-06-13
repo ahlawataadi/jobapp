@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #111827;
+  background-color: #f9fafb;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.skeleton {
+  animation: pulse-bg 1.5s ease-in-out infinite;
+  background-color: #e5e7eb;
+}
+
+/* Dark mode: global overrides for common Tailwind utility classes used
+   throughout the app, so existing pages get a dark theme without each
+   component needing explicit dark: variants. */
+.dark body {
+  color: #e2e8f0;
+  background-color: #0f172a;
+}
+.dark .bg-white { background-color: #1e293b; }
+.dark .bg-gray-50 { background-color: #0f172a; }
+.dark .bg-gray-100 { background-color: #273449; }
+.dark .bg-gray-900 { background-color: #020617; }
+.dark .bg-primary-50 { background-color: rgba(99,102,241,0.15); }
+.dark .bg-primary-100 { background-color: rgba(99,102,241,0.25); }
+.dark .text-gray-900 { color: #f1f5f9; }
+.dark .text-gray-800 { color: #e2e8f0; }
+.dark .text-gray-700 { color: #cbd5e1; }
+.dark .text-gray-600 { color: #94a3b8; }
+.dark .text-gray-500 { color: #94a3b8; }
+.dark .text-gray-400 { color: #64748b; }
+.dark .border, .dark .border-gray-100, .dark .border-gray-200, .dark .border-gray-300, .dark .border-b, .dark .border-t {
+  border-color: #334155;
+}
+.dark .shadow-card, .dark .shadow-card-hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+}
+.dark .skeleton {
+  background-color: #334155;
+}
+.dark input, .dark select, .dark textarea {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #64748b;
+}

@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "D:\\work\\learning\\claude\\jobapp\\client",
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "D:\\work\\learning\\claude\\jobapp\\server",
+      "port": 5000
+    }
+  ]
+}
