@@ -9,6 +9,17 @@ const adminConfigSchema = new mongoose.Schema({
   siteTitle: { type: String, default: "Haryana Job Marketplace — Find Jobs Across Haryana" },
   metaDescription: { type: String, default: "Connecting job seekers with employers across Haryana — diagnostics, manufacturing, logistics, IT and more." },
   logoUrl: { type: String, default: "" },
+  aboutUs: {
+    type: String,
+    default:
+      "Job Marketplace connects job seekers with employers in diagnostics, manufacturing, logistics, IT, and more. Our mission is to make local hiring fast, transparent, and accessible — whether you're looking for your first job or your next career move.\n\nWe work with vendors and employers across districts and regions to bring verified job openings directly to job seekers, with tools for applications, comparisons, and reviews.\n\nFor employers, we provide a streamlined dashboard to post jobs, manage applications, and track hiring performance — all in one place.",
+  },
+  contact: {
+    email: { type: String, default: "support@jobmarketplace.example" },
+    phone: { type: String, default: "+91 8708730150" },
+    address: { type: String, default: "India" },
+    message: { type: String, default: "Have a question or need help? Reach out and our team will get back to you." },
+  },
   smtp: {
     host: { type: String, default: "" },
     port: { type: Number, default: 587 },

@@ -17,6 +17,8 @@ const SECTIONS = {
 };
 
 const BRANDING_DEFAULTS = { siteName: "", siteTitle: "", metaDescription: "" };
+const ABOUT_DEFAULTS = { aboutUs: "" };
+const CONTACT_DEFAULTS = { email: "", phone: "", address: "", message: "" };
 
 export default function AdminSettings() {
   const { data, isLoading } = useGetIntegrationSettingsQuery();
@@ -30,6 +32,8 @@ export default function AdminSettings() {
   const [updateConfig, { isLoading: savingBranding }] = useUpdateAdminConfigMutation();
   const [uploadLogo, { isLoading: uploadingLogo }] = useUploadLogoMutation();
   const [branding, setBranding] = useState(BRANDING_DEFAULTS);
+  const [about, setAbout] = useState(ABOUT_DEFAULTS);
+  const [contact, setContact] = useState(CONTACT_DEFAULTS);
 
   useEffect(() => {
     if (data) {
@@ -42,6 +46,8 @@ export default function AdminSettings() {
   useEffect(() => {
     if (configData?.config) {
       setBranding({ ...BRANDING_DEFAULTS, ...configData.config });
+      setAbout({ aboutUs: configData.config.aboutUs || "" });
+      setContact({ ...CONTACT_DEFAULTS, ...configData.config.contact });
     }
   }, [configData]);
 
@@ -62,6 +68,26 @@ export default function AdminSettings() {
       setSavedMsg("Branding settings saved.");
     } catch {
       setSavedMsg("Failed to save branding settings.");
+    }
+  };
+
+  const saveAbout = async () => {
+    setSavedMsg("");
+    try {
+      await updateConfig(about).unwrap();
+      setSavedMsg("About Us content saved.");
+    } catch {
+      setSavedMsg("Failed to save About Us content.");
+    }
+  };
+
+  const saveContact = async () => {
+    setSavedMsg("");
+    try {
+      await updateConfig({ contact }).unwrap();
+      setSavedMsg("Contact Us info saved.");
+    } catch {
+      setSavedMsg("Failed to save Contact Us info.");
     }
   };
 
@@ -124,6 +150,63 @@ export default function AdminSettings() {
           className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
         >
           {savingBranding ? "Saving..." : "Save branding settings"}
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+        <h2 className="font-bold text-gray-900">About Us page</h2>
+        <p className="text-sm text-gray-500">
+          Content shown on the public "About Us" page. Separate paragraphs with a blank line.
+        </p>
+        <textarea
+          rows={8}
+          className={inputCls}
+          value={about.aboutUs}
+          onChange={(e) => setAbout({ aboutUs: e.target.value })}
+        />
+        <button
+          disabled={savingBranding}
+          onClick={saveAbout}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
+        >
+          {savingBranding ? "Saving..." : "Save About Us content"}
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+        <h2 className="font-bold text-gray-900">Contact Us page</h2>
+        <p className="text-sm text-gray-500">
+          Contact details and intro message shown on the public "Contact Us" page.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="sm:col-span-2">
+            <label className="block text-gray-600 mb-1">Intro message</label>
+            <textarea
+              rows={2}
+              className={inputCls}
+              value={contact.message}
+              onChange={(e) => setContact({ ...contact, message: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-600 mb-1">Email</label>
+            <input className={inputCls} value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-gray-600 mb-1">Phone</label>
+            <input className={inputCls} value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-gray-600 mb-1">Address</label>
+            <input className={inputCls} value={contact.address} onChange={(e) => setContact({ ...contact, address: e.target.value })} />
+          </div>
+        </div>
+        <button
+          disabled={savingBranding}
+          onClick={saveContact}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
+        >
+          {savingBranding ? "Saving..." : "Save Contact Us info"}
         </button>
       </div>
 
