@@ -32,6 +32,8 @@ import ContactUs from "./pages/ContactUs.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
+import AdminBroadcastEmail from "./pages/admin/AdminBroadcastEmail.jsx";
+import AdminBroadcastSms from "./pages/admin/AdminBroadcastSms.jsx";
 import Footer from "./components/Footer.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 
@@ -156,6 +158,8 @@ export default function App() {
           <Route path="webhooks" element={<AdminWebhooks />} />
           <Route path="import" element={<AdminImport />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="broadcasts/email" element={<AdminBroadcastEmail />} />
+          <Route path="broadcasts/sms" element={<AdminBroadcastSms />} />
         </Route>
       </Routes>
       </div>

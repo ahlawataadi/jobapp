@@ -7,6 +7,8 @@ const NAV_ITEMS = [
   { to: "/admin/banners", label: "Banners" },
   { to: "/admin/webhooks", label: "Webhooks" },
   { to: "/admin/import", label: "Import Data" },
+  { to: "/admin/broadcasts/email", label: "Email Broadcast" },
+  { to: "/admin/broadcasts/sms", label: "SMS Broadcast" },
   { to: "/admin/settings", label: "Settings" },
 ];
 

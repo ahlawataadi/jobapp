@@ -9,6 +9,11 @@ const adminConfigSchema = new mongoose.Schema({
   siteTitle: { type: String, default: "Haryana Job Marketplace — Find Jobs Across Haryana" },
   metaDescription: { type: String, default: "Connecting job seekers with employers across Haryana — diagnostics, manufacturing, logistics, IT and more." },
   logoUrl: { type: String, default: "" },
+  otpSettings: {
+    emailEnabled: { type: Boolean, default: true },
+    smsEnabled: { type: Boolean, default: true },
+  },
+  googleMapsApiKey: { type: String, default: "" },
   aboutUs: {
     type: String,
     default:

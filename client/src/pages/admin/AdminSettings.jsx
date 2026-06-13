@@ -19,6 +19,8 @@ const SECTIONS = {
 const BRANDING_DEFAULTS = { siteName: "", siteTitle: "", metaDescription: "" };
 const ABOUT_DEFAULTS = { aboutUs: "" };
 const CONTACT_DEFAULTS = { email: "", phone: "", address: "", message: "" };
+const OTP_DEFAULTS = { emailEnabled: true, smsEnabled: true };
+const MAPS_DEFAULTS = { googleMapsApiKey: "" };
 
 export default function AdminSettings() {
   const { data, isLoading } = useGetIntegrationSettingsQuery();
@@ -34,6 +36,8 @@ export default function AdminSettings() {
   const [branding, setBranding] = useState(BRANDING_DEFAULTS);
   const [about, setAbout] = useState(ABOUT_DEFAULTS);
   const [contact, setContact] = useState(CONTACT_DEFAULTS);
+  const [otpSettings, setOtpSettings] = useState(OTP_DEFAULTS);
+  const [maps, setMaps] = useState(MAPS_DEFAULTS);
 
   useEffect(() => {
     if (data) {
@@ -48,6 +52,8 @@ export default function AdminSettings() {
       setBranding({ ...BRANDING_DEFAULTS, ...configData.config });
       setAbout({ aboutUs: configData.config.aboutUs || "" });
       setContact({ ...CONTACT_DEFAULTS, ...configData.config.contact });
+      setOtpSettings({ ...OTP_DEFAULTS, ...configData.config.otpSettings });
+      setMaps({ googleMapsApiKey: configData.config.googleMapsApiKey || "" });
     }
   }, [configData]);
 
@@ -88,6 +94,26 @@ export default function AdminSettings() {
       setSavedMsg("Contact Us info saved.");
     } catch {
       setSavedMsg("Failed to save Contact Us info.");
+    }
+  };
+
+  const saveOtpSettings = async () => {
+    setSavedMsg("");
+    try {
+      await updateConfig({ otpSettings }).unwrap();
+      setSavedMsg("OTP verification settings saved.");
+    } catch {
+      setSavedMsg("Failed to save OTP verification settings.");
+    }
+  };
+
+  const saveMaps = async () => {
+    setSavedMsg("");
+    try {
+      await updateConfig({ googleMapsApiKey: maps.googleMapsApiKey }).unwrap();
+      setSavedMsg("Google Maps API key saved.");
+    } catch {
+      setSavedMsg("Failed to save Google Maps API key.");
     }
   };
 
@@ -207,6 +233,61 @@ export default function AdminSettings() {
           className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
         >
           {savingBranding ? "Saving..." : "Save Contact Us info"}
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+        <h2 className="font-bold text-gray-900">OTP verification</h2>
+        <p className="text-sm text-gray-500">
+          Control whether new signups and unverified logins require an email or SMS one-time-passcode. If both are
+          disabled, accounts are activated immediately without verification.
+        </p>
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={otpSettings.emailEnabled}
+              onChange={(e) => setOtpSettings({ ...otpSettings, emailEnabled: e.target.checked })}
+            />
+            Email OTP verification enabled
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={otpSettings.smsEnabled}
+              onChange={(e) => setOtpSettings({ ...otpSettings, smsEnabled: e.target.checked })}
+            />
+            SMS OTP verification enabled
+          </label>
+        </div>
+        <button
+          disabled={savingBranding}
+          onClick={saveOtpSettings}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
+        >
+          {savingBranding ? "Saving..." : "Save OTP settings"}
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+        <h2 className="font-bold text-gray-900">Google Maps</h2>
+        <p className="text-sm text-gray-500">
+          API key used for location autocomplete (address/city/state search) across the site.
+        </p>
+        <div className="text-sm">
+          <label className="block text-gray-600 mb-1">Google Maps API key</label>
+          <input
+            className={inputCls}
+            value={maps.googleMapsApiKey}
+            onChange={(e) => setMaps({ googleMapsApiKey: e.target.value })}
+          />
+        </div>
+        <button
+          disabled={savingBranding}
+          onClick={saveMaps}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
+        >
+          {savingBranding ? "Saving..." : "Save Google Maps key"}
         </button>
       </div>
 

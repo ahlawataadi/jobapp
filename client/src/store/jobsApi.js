@@ -13,7 +13,7 @@ const baseQuery = fetchBaseQuery({
 export const jobsApi = createApi({
   reducerPath: "jobsApi",
   baseQuery,
-  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings"],
+  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast"],
   endpoints: (builder) => ({
     getJobs: builder.query({
       query: (params) => ({ url: "/jobs", params }),
@@ -246,6 +246,18 @@ export const jobsApi = createApi({
       query: (params) => ({ url: "/admin/activity-logs", params }),
       providesTags: ["Analytics"],
     }),
+    listBroadcasts: builder.query({
+      query: (params) => ({ url: "/admin/broadcasts", params }),
+      providesTags: ["Broadcast"],
+    }),
+    createEmailBroadcast: builder.mutation({
+      query: (formData) => ({ url: "/admin/broadcasts/email", method: "POST", body: formData }),
+      invalidatesTags: ["Broadcast"],
+    }),
+    createSmsBroadcast: builder.mutation({
+      query: (body) => ({ url: "/admin/broadcasts/sms", method: "POST", body }),
+      invalidatesTags: ["Broadcast"],
+    }),
 
     listReviews: builder.query({
       query: (vendorId) => `/reviews/${vendorId}`,
@@ -287,6 +299,9 @@ export const {
   useUpdateAdminConfigMutation,
   useUploadLogoMutation,
   useListActivityLogsQuery,
+  useListBroadcastsQuery,
+  useCreateEmailBroadcastMutation,
+  useCreateSmsBroadcastMutation,
   useListAdminVendorsQuery,
   useUpdateVendorStatusMutation,
   useListAdminUsersQuery,
