@@ -6,6 +6,7 @@ import {
   useUploadVendorDocumentsMutation,
 } from "../store/jobsApi.js";
 import RazorpayCheckout from "../components/RazorpayCheckout.jsx";
+import LocationAutocomplete from "../components/LocationAutocomplete.jsx";
 
 const STEPS = ["Organization", "Documents", "Payment"];
 const inputCls =
@@ -104,14 +105,20 @@ export default function VendorOnboard() {
             value={form.industry}
             onChange={(e) => setForm({ ...form, industry: e.target.value })}
           />
-          <input
+          <LocationAutocomplete
             placeholder="Address"
             className={inputCls}
             value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            onChange={(value) => setForm({ ...form, address: value })}
+            onSelect={(location) =>
+              setForm((f) => ({
+                ...f,
+                district: location.district || location.city || f.district,
+              }))
+            }
           />
           <input
-            placeholder="District (e.g. Gurugram)"
+            placeholder="District / City (auto-filled from address)"
             required
             className={inputCls}
             value={form.district}

@@ -71,7 +71,10 @@ export const listJobs = async (req, res, next) => {
     } = req.query;
 
     const filter = { status: "open" };
-    if (district) filter["location.district"] = district;
+    if (district) {
+      const re = new RegExp(district.trim().split(/[\s,]+/).filter(Boolean).join("|"), "i");
+      filter.$or = [{ "location.district": re }, { "location.city": re }];
+    }
     if (category) filter.category = category;
     if (industry) filter.industry = industry;
     if (jobType) filter.jobType = jobType;

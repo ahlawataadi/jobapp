@@ -4,6 +4,20 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/
 import { sendMail } from "../utils/mailer.js";
 import { generateAndSendOtp, verifyOtp as checkOtp } from "../utils/otp.js";
 import { logActivity } from "../utils/activityLog.js";
+import { getConfig } from "../models/AdminConfig.js";
+
+// Picks a verification channel honoring admin OTP toggles. Returns null if
+// no channel is enabled, meaning verification should be skipped entirely.
+const resolveOtpChannel = async (preferred, hasPhone) => {
+  const config = await getConfig();
+  const emailOk = config.otpSettings?.emailEnabled !== false;
+  const smsOk = config.otpSettings?.smsEnabled !== false && hasPhone;
+  if (preferred === "phone" && smsOk) return "phone";
+  if (preferred !== "phone" && emailOk) return "email";
+  if (emailOk) return "email";
+  if (smsOk) return "phone";
+  return null;
+};
 
 const REFRESH_COOKIE = "jobapp_refresh";
 
@@ -33,12 +47,22 @@ export const register = async (req, res, next) => {
     if (existing) return res.status(409).json({ message: "Email already registered" });
 
     const allowedRole = role === "vendor" ? "vendor" : "seeker";
-    const channel = req.body.channel === "phone" && phone ? "phone" : "email";
+    const preferredChannel = req.body.channel === "phone" && phone ? "phone" : "email";
 
     const user = new User({ name, email, phone, role: allowedRole });
     await user.setPassword(password);
-    await user.save();
 
+    const channel = await resolveOtpChannel(preferredChannel, !!phone);
+    if (!channel) {
+      // OTP verification disabled entirely — activate the account immediately.
+      user.isVerified = true;
+      await user.save();
+      const accessToken = await issueTokens(res, user);
+      await logActivity(req, user, "signup");
+      return res.status(201).json({ user: user.toSafeJSON(), accessToken, verified: true });
+    }
+
+    await user.save();
     const { sent, code } = await generateAndSendOtp(user, channel);
 
     const payload = {
@@ -73,16 +97,21 @@ export const login = async (req, res, next) => {
     }
 
     if (!user.isVerified) {
-      const channel = user.phone ? "phone" : "email";
-      const { sent, code } = await generateAndSendOtp(user, channel);
-      const payload = {
-        requiresVerification: true,
-        userId: user._id,
-        channel,
-        message: `Please verify your account. A code has been sent to your ${channel === "phone" ? "phone" : "email"}.`,
-      };
-      if (!sent) payload.devOtp = code;
-      return res.status(403).json(payload);
+      const channel = await resolveOtpChannel(user.phone ? "phone" : "email", !!user.phone);
+      if (!channel) {
+        user.isVerified = true;
+        await user.save();
+      } else {
+        const { sent, code } = await generateAndSendOtp(user, channel);
+        const payload = {
+          requiresVerification: true,
+          userId: user._id,
+          channel,
+          message: `Please verify your account. A code has been sent to your ${channel === "phone" ? "phone" : "email"}.`,
+        };
+        if (!sent) payload.devOtp = code;
+        return res.status(403).json(payload);
+      }
     }
 
     const accessToken = await issueTokens(res, user);
@@ -128,7 +157,14 @@ export const resendOtp = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.isVerified) return res.status(400).json({ message: "Account already verified" });
 
-    const useChannel = channel === "phone" && user.phone ? "phone" : "email";
+    const resolved = await resolveOtpChannel(channel === "phone" && user.phone ? "phone" : "email", !!user.phone);
+    if (!resolved) {
+      user.isVerified = true;
+      await user.save();
+      return res.json({ message: "Verification is disabled; your account has been activated." });
+    }
+
+    const useChannel = resolved;
     const { sent, code } = await generateAndSendOtp(user, useChannel);
 
     const payload = { message: `A new code has been sent to your ${useChannel === "phone" ? "phone" : "email"}.` };

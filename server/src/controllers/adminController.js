@@ -28,6 +28,8 @@ export const getAdminConfig = async (req, res, next) => {
         logoUrl: config.logoUrl,
         aboutUs: config.aboutUs,
         contact: config.contact,
+        otpSettings: config.otpSettings,
+        googleMapsApiKey: config.googleMapsApiKey,
         paymentGateway: { provider: config.paymentGateway?.provider, keyId: config.paymentGateway?.keyId },
       },
     });
@@ -38,7 +40,7 @@ export const getAdminConfig = async (req, res, next) => {
 
 export const updateAdminConfig = async (req, res, next) => {
   try {
-    const { paymentRequired, signupFeeAmount, analyticsScript, siteName, siteTitle, metaDescription, aboutUs, contact } = req.body;
+    const { paymentRequired, signupFeeAmount, analyticsScript, siteName, siteTitle, metaDescription, aboutUs, contact, otpSettings, googleMapsApiKey } = req.body;
     const config = await getConfig();
 
     if (typeof paymentRequired === "boolean") config.paymentRequired = paymentRequired;
@@ -58,6 +60,13 @@ export const updateAdminConfig = async (req, res, next) => {
         message: typeof contact.message === "string" ? contact.message : config.contact?.message || "",
       };
     }
+    if (otpSettings && typeof otpSettings === "object") {
+      config.otpSettings = {
+        emailEnabled: typeof otpSettings.emailEnabled === "boolean" ? otpSettings.emailEnabled : config.otpSettings?.emailEnabled ?? true,
+        smsEnabled: typeof otpSettings.smsEnabled === "boolean" ? otpSettings.smsEnabled : config.otpSettings?.smsEnabled ?? true,
+      };
+    }
+    if (typeof googleMapsApiKey === "string") config.googleMapsApiKey = googleMapsApiKey;
 
     await config.save();
     res.json({ config });

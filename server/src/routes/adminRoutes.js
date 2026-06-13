@@ -21,6 +21,8 @@ import {
   listActivityLogs,
 } from "../controllers/adminController.js";
 import logoUpload from "../middleware/logoUpload.js";
+import broadcastUpload from "../middleware/broadcastUpload.js";
+import { listBroadcasts, createEmailBroadcast, createSmsBroadcast } from "../controllers/broadcastController.js";
 import {
   listBanners,
   createBanner,
@@ -79,5 +81,9 @@ router.post("/webhooks", createWebhook);
 router.patch("/webhooks/:id", updateWebhook);
 router.delete("/webhooks/:id", deleteWebhook);
 router.post("/webhooks/:id/test", testWebhook);
+
+router.get("/broadcasts", listBroadcasts);
+router.post("/broadcasts/email", broadcastUpload.single("image"), createEmailBroadcast);
+router.post("/broadcasts/sms", createSmsBroadcast);
 
 export default router;

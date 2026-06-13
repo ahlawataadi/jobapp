@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { useSuggestJobsQuery } from "../store/jobsApi.js";
-
-const DISTRICTS = [
-  "Gurugram",
-  "Faridabad",
-  "Hisar",
-  "Panipat",
-  "Panchkula",
-  "Rohtak",
-  "Karnal",
-  "Ambala",
-];
+import LocationAutocomplete from "./LocationAutocomplete.jsx";
 
 const JOB_TYPES = ["full-time", "part-time", "contract", "internship"];
 
@@ -65,19 +55,12 @@ export default function FilterPanel({ filters, onChange }) {
       </div>
 
       <div className="border-t border-gray-100 pt-4">
-        <label className="block font-semibold text-gray-700 mb-1">District</label>
-        <select
+        <label className="block font-semibold text-gray-700 mb-1">Location</label>
+        <LocationAutocomplete
           className={inputCls}
           value={filters.district || ""}
-          onChange={(e) => update("district", e.target.value)}
-        >
-          <option value="">All districts</option>
-          {DISTRICTS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => update("district", value)}
+        />
       </div>
 
       <div>
