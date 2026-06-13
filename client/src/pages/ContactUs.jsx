@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useGetAdminConfigQuery } from "../store/jobsApi.js";
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
 
 export default function ContactUs() {
+  const { data } = useGetAdminConfigQuery();
+  const contact = data?.config?.contact || {};
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
 
@@ -17,14 +20,14 @@ export default function ContactUs() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Contact Us</h1>
         <p className="text-gray-500 mt-1">
-          Have a question or need help? Reach out and our team will get back to you.
+          {contact.message || "Have a question or need help? Reach out and our team will get back to you."}
         </p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-1 text-sm text-gray-600">
-        <p>Email: support@jobmarketplace.example</p>
-        <p>Phone: +91 8708730150</p>
-        <p>Address: India</p>
+        <p>Email: {contact.email || "support@jobmarketplace.example"}</p>
+        <p>Phone: {contact.phone || "+91 8708730150"}</p>
+        <p>Address: {contact.address || "India"}</p>
       </div>
 
       {submitted ? (

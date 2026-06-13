@@ -26,6 +26,8 @@ export const getAdminConfig = async (req, res, next) => {
         siteTitle: config.siteTitle,
         metaDescription: config.metaDescription,
         logoUrl: config.logoUrl,
+        aboutUs: config.aboutUs,
+        contact: config.contact,
         paymentGateway: { provider: config.paymentGateway?.provider, keyId: config.paymentGateway?.keyId },
       },
     });
@@ -36,7 +38,7 @@ export const getAdminConfig = async (req, res, next) => {
 
 export const updateAdminConfig = async (req, res, next) => {
   try {
-    const { paymentRequired, signupFeeAmount, analyticsScript, siteName, siteTitle, metaDescription } = req.body;
+    const { paymentRequired, signupFeeAmount, analyticsScript, siteName, siteTitle, metaDescription, aboutUs, contact } = req.body;
     const config = await getConfig();
 
     if (typeof paymentRequired === "boolean") config.paymentRequired = paymentRequired;
@@ -47,6 +49,15 @@ export const updateAdminConfig = async (req, res, next) => {
     if (typeof siteName === "string") config.siteName = siteName;
     if (typeof siteTitle === "string") config.siteTitle = siteTitle;
     if (typeof metaDescription === "string") config.metaDescription = metaDescription;
+    if (typeof aboutUs === "string") config.aboutUs = aboutUs;
+    if (contact && typeof contact === "object") {
+      config.contact = {
+        email: typeof contact.email === "string" ? contact.email : config.contact?.email || "",
+        phone: typeof contact.phone === "string" ? contact.phone : config.contact?.phone || "",
+        address: typeof contact.address === "string" ? contact.address : config.contact?.address || "",
+        message: typeof contact.message === "string" ? contact.message : config.contact?.message || "",
+      };
+    }
 
     await config.save();
     res.json({ config });
