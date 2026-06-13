@@ -22,9 +22,9 @@ export default function ContactUs() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-1 text-sm text-gray-600">
-        <p>Email: support@haryanajobmarketplace.example</p>
-        <p>Phone: +91 1800-000-000</p>
-        <p>Address: Sector 29, Gurugram, Haryana, India</p>
+        <p>Email: support@jobmarketplace.example</p>
+        <p>Phone: +91 8708730150</p>
+        <p>Address: India</p>
       </div>
 
       {submitted ? (
