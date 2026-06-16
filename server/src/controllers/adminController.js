@@ -34,6 +34,16 @@ export const getAdminConfig = async (req, res, next) => {
         paymentGateway: { provider: config.paymentGateway?.provider, keyId: config.paymentGateway?.keyId },
         contactPacks: config.contactPacks,
         subscriptionPlans: config.subscriptionPlans,
+        seekerPlans: config.seekerPlans ?? {
+          basic:      { priceMonthly: 499,  features: "10 job applications/day, profile visibility, job alerts" },
+          pro:        { priceMonthly: 999,  features: "Unlimited applications, intro video profile, priority listing, resume builder" },
+          enterprise: { priceMonthly: 1999, features: "Everything in Pro, dedicated career counsellor, featured profile, API access" },
+        },
+        vendorPlans: config.vendorPlans ?? {
+          basic:      { priceMonthly: 999,  features: "5 active job posts, basic applicant tracking, email support" },
+          pro:        { priceMonthly: 2999, features: "25 active job posts, priority support, featured listings, intro video" },
+          enterprise: { priceMonthly: 9999, features: "Unlimited job posts, dedicated account manager, API access, bulk import" },
+        },
         featuredWorkerFee: config.featuredWorkerFee,
       },
     });
@@ -73,7 +83,7 @@ export const updateAdminConfig = async (req, res, next) => {
     if (typeof googleMapsApiKey === "string") config.googleMapsApiKey = googleMapsApiKey;
 
     // Fee / pricing updates
-    const { contactPacks, subscriptionPlans, featuredWorkerFee } = req.body;
+    const { contactPacks, subscriptionPlans, seekerPlans, vendorPlans, featuredWorkerFee } = req.body;
     if (contactPacks && typeof contactPacks === "object") {
       const cp = config.contactPacks || {};
       for (const tier of ["starter", "standard", "pro"]) {
@@ -96,6 +106,22 @@ export const updateAdminConfig = async (req, res, next) => {
     }
     if (featuredWorkerFee && typeof featuredWorkerFee.pricePerWeek === "number") {
       config.featuredWorkerFee = { pricePerWeek: featuredWorkerFee.pricePerWeek };
+    }
+
+    for (const [key, incoming] of [["seekerPlans", seekerPlans], ["vendorPlans", vendorPlans]]) {
+      if (incoming && typeof incoming === "object") {
+        const current = config[key] || {};
+        for (const tier of ["basic", "pro", "enterprise"]) {
+          if (incoming[tier]) {
+            const t = current[tier] || {};
+            if (typeof incoming[tier].priceMonthly === "number") t.priceMonthly = incoming[tier].priceMonthly;
+            if (typeof incoming[tier].features === "string") t.features = incoming[tier].features;
+            current[tier] = t;
+          }
+        }
+        config[key] = current;
+        config.markModified(key);
+      }
     }
 
     await config.save();
@@ -234,6 +260,32 @@ export const listUsers = async (req, res, next) => {
     ]);
 
     res.json({ items, total, page, pages: Math.ceil(total / limit) || 1 });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /api/admin/users/:id/subscription
+export const setUserSubscription = async (req, res, next) => {
+  try {
+    const { plan, expiresAt } = req.body;
+    const VALID = ["none", "basic", "pro", "enterprise"];
+    if (!VALID.includes(plan)) {
+      return res.status(400).json({ message: `Invalid plan. Choose: ${VALID.join(", ")}` });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.subscription.plan = plan;
+    user.subscription.expiresAt = expiresAt
+      ? new Date(expiresAt)
+      : plan === "none"
+      ? null
+      : (() => { const d = new Date(); d.setDate(d.getDate() + 30); return d; })();
+
+    await user.save();
+    res.json({ subscription: user.subscription });
   } catch (err) {
     next(err);
   }

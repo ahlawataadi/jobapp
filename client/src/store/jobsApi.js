@@ -237,6 +237,17 @@ export const jobsApi = createApi({
       query: (body) => ({ url: "/payments/verify", method: "POST", body }),
       invalidatesTags: ["Vendor"],
     }),
+    createSubscriptionOrder: builder.mutation({
+      query: (body) => ({ url: "/payments/subscribe/create-order", method: "POST", body }),
+    }),
+    verifySubscription: builder.mutation({
+      query: (body) => ({ url: "/payments/subscribe/verify", method: "POST", body }),
+      invalidatesTags: ["Me"],
+    }),
+    setUserSubscription: builder.mutation({
+      query: ({ id, ...body }) => ({ url: `/admin/users/${id}/subscription`, method: "PATCH", body }),
+      invalidatesTags: ["User"],
+    }),
 
     getIntegrationSettings: builder.query({
       query: () => "/admin/settings/integrations",
@@ -380,6 +391,19 @@ export const jobsApi = createApi({
       query: (formData) => ({ url: "/admin/blog/import", method: "POST", body: formData }),
       invalidatesTags: ["Blog"],
     }),
+
+    // Subscriptions
+    createSubscriptionOrder: builder.mutation({
+      query: (body) => ({ url: "/payments/subscribe/create-order", method: "POST", body }),
+    }),
+    verifySubscription: builder.mutation({
+      query: (body) => ({ url: "/payments/subscribe/verify", method: "POST", body }),
+      invalidatesTags: ["Me"],
+    }),
+    setUserSubscription: builder.mutation({
+      query: ({ id, ...body }) => ({ url: `/admin/users/${id}/subscription`, method: "PATCH", body }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -468,6 +492,9 @@ export const {
   useSendMessageMutation,
   useUnreadCountQuery,
   useImportBlogsMutation,
+  useCreateSubscriptionOrderMutation,
+  useVerifySubscriptionMutation,
+  useSetUserSubscriptionMutation,
   useUploadWorkerVideoMutation,
   useRemoveWorkerVideoMutation,
   useUploadVendorVideoMutation,

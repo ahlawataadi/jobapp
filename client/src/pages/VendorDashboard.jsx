@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   useMyVendorQuery,
   useMyJobsQuery,
@@ -39,6 +40,7 @@ const STATUS_BADGE = {
 };
 
 export default function VendorDashboard() {
+  const { user } = useSelector((s) => s.auth);
   const { data: vendorData, isLoading: vendorLoading, error: vendorError } = useMyVendorQuery();
   const { data: jobsData } = useMyJobsQuery(undefined, { skip: !vendorData });
   const [createJob, { isLoading: creating, error: createError }] = useCreateJobMutation();
@@ -107,6 +109,32 @@ export default function VendorDashboard() {
             <RazorpayCheckout onSuccess={() => window.location.reload()} />
           </div>
         )}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-card">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="font-bold text-gray-900">Subscription</h2>
+            {user?.subscription?.plan && user.subscription.plan !== "none" ? (
+              <p className="text-sm text-gray-500 mt-0.5">
+                <span className={`inline-block mr-2 px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                  user.subscription.plan === "enterprise" ? "bg-gray-900 text-white" :
+                  user.subscription.plan === "pro" ? "bg-primary-600 text-white" :
+                  "bg-gray-100 text-gray-700"
+                }`}>{user.subscription.plan}</span>
+                {user.subscription.expiresAt && `Expires ${new Date(user.subscription.expiresAt).toLocaleDateString("en-IN")}`}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-0.5">No active plan — unlock intro video and premium features.</p>
+            )}
+          </div>
+          <Link
+            to="/pricing"
+            className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
+          >
+            {user?.subscription?.plan && user.subscription.plan !== "none" ? "Manage plan" : "View plans"}
+          </Link>
+        </div>
       </div>
 
       {vendor?.status === "active" && (

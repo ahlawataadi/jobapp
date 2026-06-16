@@ -43,6 +43,7 @@ import WorkerSearch from "./pages/WorkerSearch.jsx";
 import WorkerPublicProfile from "./pages/WorkerPublicProfile.jsx";
 import WorkerProfileSetup from "./pages/WorkerProfileSetup.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
+import Pricing from "./pages/Pricing.jsx";
 import Footer from "./components/Footer.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 
@@ -116,6 +117,7 @@ export default function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="/blog" element={<BlogList />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/workers" element={<WorkerSearch />} />

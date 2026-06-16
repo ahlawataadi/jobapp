@@ -2,6 +2,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import Payment from "../models/Payment.js";
 import Vendor from "../models/Vendor.js";
+import User from "../models/User.js";
 import { getConfig } from "../models/AdminConfig.js";
 
 const getGatewayKeys = (config) => ({
@@ -96,6 +97,91 @@ export const verifyPayment = async (req, res, next) => {
     await vendor.save();
 
     res.json({ message: "Payment verified", vendor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/payments/subscribe/create-order
+// body: { plan: "basic" | "pro" | "enterprise" }
+export const createSubscriptionOrder = async (req, res, next) => {
+  try {
+    const { plan } = req.body;
+    if (!["basic", "pro", "enterprise"].includes(plan)) {
+      return res.status(400).json({ message: "Invalid plan. Choose: basic, pro, or enterprise" });
+    }
+
+    const config = await getConfig();
+    const planKey = req.user.role === "vendor" ? "vendorPlans" : "seekerPlans";
+    const planConfig = config[planKey]?.[plan] ?? config.subscriptionPlans?.[plan];
+    if (!planConfig?.priceMonthly) {
+      return res.status(400).json({ message: "Subscription plan not configured" });
+    }
+
+    const amountPaise = Math.round(planConfig.priceMonthly * 100);
+    const keys = getGatewayKeys(config);
+    const razorpay = getRazorpay(keys);
+
+    const order = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: "INR",
+      receipt: `sub_${req.user._id}_${Date.now()}`,
+      notes: { userId: req.user._id.toString(), plan },
+    });
+
+    await Payment.create({
+      type: "subscription",
+      userId: req.user._id,
+      subscriptionPlan: plan,
+      razorpayOrderId: order.id,
+      amount: amountPaise,
+      status: "created",
+    });
+
+    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: keys.keyId, plan });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/payments/subscribe/verify
+// body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+export const verifySubscriptionPayment = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Missing payment verification fields" });
+    }
+
+    const config = await getConfig();
+    const keys = getGatewayKeys(config);
+    const expected = crypto
+      .createHmac("sha256", keys.keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id, type: "subscription" });
+    if (!payment) return res.status(404).json({ message: "Payment record not found" });
+
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.razorpaySignature = razorpay_signature;
+    payment.status = "paid";
+    await payment.save();
+
+    const user = await User.findById(payment.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    user.subscription.plan = payment.subscriptionPlan;
+    user.subscription.expiresAt = expiresAt;
+    await user.save();
+
+    res.json({ message: "Subscription activated", plan: payment.subscriptionPlan, expiresAt });
   } catch (err) {
     next(err);
   }
