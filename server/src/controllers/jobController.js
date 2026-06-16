@@ -37,6 +37,7 @@ export const createJob = async (req, res, next) => {
         orgName: vendor.orgName,
         district: vendor.district,
         avgRating: vendor.avgRating,
+        vendorUserId: String(vendor.userId),
       },
       title,
       description,

@@ -7,6 +7,7 @@ const jobSchema = new mongoose.Schema(
       orgName: String,
       district: String,
       avgRating: Number,
+      vendorUserId: String,
     },
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true },

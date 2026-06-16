@@ -1,8 +1,11 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useGetVendorQuery, useListReviewsQuery } from "../store/jobsApi.js";
 
 export default function VendorProfile() {
   const { id } = useParams();
+  const { user } = useSelector((s) => s.auth);
+  const navigate = useNavigate();
   const { data, isLoading, error } = useGetVendorQuery(id);
   const { data: reviewsData } = useListReviewsQuery(id);
 
@@ -29,13 +32,29 @@ export default function VendorProfile() {
         <div className="w-14 h-14 rounded-xl bg-primary-50 text-primary-700 font-bold text-xl flex items-center justify-center shrink-0">
           {initial}
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">{vendor.orgName}</h1>
           <p className="text-gray-600">{vendor.industry} · {vendor.district}</p>
           <p className="text-sm text-gray-500 mt-1">{vendor.address}</p>
           <p className="text-yellow-600 mt-2 font-medium">
             {vendor.avgRating > 0 ? `★ ${vendor.avgRating.toFixed(1)}` : "No ratings yet"}
           </p>
+          {user && vendor.userId && String(user.id || user._id) !== String(vendor.userId) && (
+            <button
+              onClick={() => navigate(`/chat/${vendor.userId}`)}
+              className="mt-3 inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
+              </svg>
+              Chat with Employer
+            </button>
+          )}
+          {!user && (
+            <Link to="/login" className="mt-3 inline-flex items-center gap-2 border border-primary-600 text-primary-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-50 transition-colors">
+              Log in to message
+            </Link>
+          )}
         </div>
       </div>
 

@@ -105,7 +105,7 @@ export const getFeaturedVendors = async (req, res, next) => {
 export const getVendorPublic = async (req, res, next) => {
   try {
     const vendor = await Vendor.findById(req.params.id).select(
-      "orgName industry address district avgRating status logoUrl"
+      "orgName industry address district avgRating status logoUrl userId"
     );
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
     res.json({ vendor });
