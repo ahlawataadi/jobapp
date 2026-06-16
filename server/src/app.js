@@ -14,6 +14,10 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import bannerRoutes from "./routes/bannerRoutes.js";
+import blogRoutes from "./routes/blogRoutes.js";
+import workerRoutes from "./routes/workerRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import whatsappRoutes from "./routes/whatsappRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -60,6 +64,10 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/banners", bannerRoutes);
+app.use("/api/blog", blogRoutes);
+app.use("/api/workers", workerRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/whatsapp", whatsappRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -14,12 +14,24 @@ import {
   updatePayment,
   importUsers,
   importVendors,
+  importJobs,
+  exportUsers,
+  exportVendors,
+  exportJobs,
   listEtlRuns,
   getIntegrationSettings,
   updateIntegrationSettings,
   uploadLogo,
   listActivityLogs,
 } from "../controllers/adminController.js";
+import {
+  listAdminBlogs,
+  getAdminBlog,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+  generateBlogNow,
+} from "../controllers/blogController.js";
 import logoUpload from "../middleware/logoUpload.js";
 import broadcastUpload from "../middleware/broadcastUpload.js";
 import { listBroadcasts, createEmailBroadcast, createSmsBroadcast } from "../controllers/broadcastController.js";
@@ -61,6 +73,19 @@ router.patch("/payments/:id", updatePayment);
 
 router.post("/import/users", csvUpload.single("file"), importUsers);
 router.post("/import/vendors", csvUpload.single("file"), importVendors);
+router.post("/import/jobs", csvUpload.single("file"), importJobs);
+
+router.get("/export/users", exportUsers);
+router.get("/export/vendors", exportVendors);
+router.get("/export/jobs", exportJobs);
+
+// Blog management
+router.get("/blog", listAdminBlogs);
+router.post("/blog", createBlog);
+router.post("/blog/generate", generateBlogNow);
+router.get("/blog/:id", getAdminBlog);
+router.patch("/blog/:id", updateBlog);
+router.delete("/blog/:id", deleteBlog);
 
 router.get("/etl/status", listEtlRuns);
 

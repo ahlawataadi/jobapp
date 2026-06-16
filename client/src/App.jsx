@@ -22,6 +22,10 @@ import AdminPayments from "./pages/admin/AdminPayments.jsx";
 import AdminWebhooks from "./pages/admin/AdminWebhooks.jsx";
 import AdminBanners from "./pages/admin/AdminBanners.jsx";
 import AdminImport from "./pages/admin/AdminImport.jsx";
+import AdminJobs from "./pages/admin/AdminJobs.jsx";
+import AdminBlog from "./pages/admin/AdminBlog.jsx";
+import BlogList from "./pages/BlogList.jsx";
+import BlogPost from "./pages/BlogPost.jsx";
 import VendorProfile from "./pages/VendorProfile.jsx";
 import Profile from "./pages/Profile.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
@@ -34,6 +38,10 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
 import AdminBroadcastEmail from "./pages/admin/AdminBroadcastEmail.jsx";
 import AdminBroadcastSms from "./pages/admin/AdminBroadcastSms.jsx";
+import WorkerSearch from "./pages/WorkerSearch.jsx";
+import WorkerPublicProfile from "./pages/WorkerPublicProfile.jsx";
+import WorkerProfileSetup from "./pages/WorkerProfileSetup.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
 import Footer from "./components/Footer.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 
@@ -107,6 +115,34 @@ export default function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/workers" element={<WorkerSearch />} />
+        <Route path="/workers/:id" element={<WorkerPublicProfile />} />
+        <Route
+          path="/worker-profile"
+          element={
+            <ProtectedRoute roles={["seeker"]}>
+              <WorkerProfileSetup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat/:userId"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/profile"
           element={
@@ -153,6 +189,8 @@ export default function App() {
         >
           <Route index element={<AdminPanel />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="jobs" element={<AdminJobs />} />
+          <Route path="blog" element={<AdminBlog />} />
           <Route path="payments" element={<AdminPayments />} />
           <Route path="banners" element={<AdminBanners />} />
           <Route path="webhooks" element={<AdminWebhooks />} />
