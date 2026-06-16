@@ -61,7 +61,7 @@ export const createJob = async (req, res, next) => {
   }
 };
 
-// GET /api/jobs?district=&category=&industry=&jobType=&minSalary=&maxSalary=&q=&sort=recent|salary&page=&limit=
+// GET /api/jobs?district=&category=&industry=&jobType=&minSalary=&maxSalary=&q=&sort=recent|salary|salary_asc&lat=&lng=&radius=&page=&limit=
 export const listJobs = async (req, res, next) => {
   try {
     const {
@@ -73,8 +73,11 @@ export const listJobs = async (req, res, next) => {
       maxSalary,
       q,
       sort = "recent",
+      lat,
+      lng,
+      radius,
       page = 1,
-      limit = 20,
+      limit = 10,
     } = req.query;
 
     const filter = { status: "open" };
@@ -97,18 +100,39 @@ export const listJobs = async (req, res, next) => {
     const sortMap = {
       recent: { createdAt: -1 },
       salary: { salaryMax: -1 },
+      salary_asc: { salaryMin: 1 },
     };
 
     const pageNum = Math.max(Number(page) || 1, 1);
-    const limitNum = Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const limitNum = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
-    const [items, total] = await Promise.all([
-      Job.find(filter)
-        .sort(sortMap[sort] || sortMap.recent)
-        .skip((pageNum - 1) * limitNum)
-        .limit(limitNum),
-      Job.countDocuments(filter),
-    ]);
+    let items, total;
+
+    if (lat && lng) {
+      // Geo search — $near requires no other sort
+      const radiusM = (Number(radius) || 25) * 1000;
+      const geoFilter = {
+        ...filter,
+        "location.geo": {
+          $near: {
+            $geometry: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+            $maxDistance: radiusM,
+          },
+        },
+      };
+      [items, total] = await Promise.all([
+        Job.find(geoFilter).skip((pageNum - 1) * limitNum).limit(limitNum),
+        Job.countDocuments(geoFilter),
+      ]);
+    } else {
+      [items, total] = await Promise.all([
+        Job.find(filter)
+          .sort(sortMap[sort] || sortMap.recent)
+          .skip((pageNum - 1) * limitNum)
+          .limit(limitNum),
+        Job.countDocuments(filter),
+      ]);
+    }
 
     res.json({
       items,

@@ -31,6 +31,7 @@ import {
   updateBlog,
   deleteBlog,
   generateBlogNow,
+  importBlogs,
 } from "../controllers/blogController.js";
 import logoUpload from "../middleware/logoUpload.js";
 import broadcastUpload from "../middleware/broadcastUpload.js";
@@ -83,6 +84,7 @@ router.get("/export/jobs", exportJobs);
 router.get("/blog", listAdminBlogs);
 router.post("/blog", createBlog);
 router.post("/blog/generate", generateBlogNow);
+router.post("/blog/import", csvUpload.single("file"), importBlogs);
 router.get("/blog/:id", getAdminBlog);
 router.patch("/blog/:id", updateBlog);
 router.delete("/blog/:id", deleteBlog);

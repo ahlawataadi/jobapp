@@ -11,8 +11,10 @@ const workerProfileSchema = new mongoose.Schema(
     bio: { type: String, default: "", maxlength: 1000 },
     hourlyRate: { type: Number, default: 0 },          // ₹ per hour
     dailyRate: { type: Number, default: 0 },           // ₹ per day
+    monthlyRate: { type: Number, default: 0 },         // ₹ per month
     payPreference: { type: String, enum: ["hourly", "daily", "monthly", "fixed"], default: "daily" },
     voiceProfileUrl: { type: String, default: "" },    // uploaded voice intro
+    profileVideoUrl: { type: String, default: "" },    // short intro video (premium)
     location: {
       district: { type: String, default: "" },
       city: { type: String, default: "" },

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import {
   useMyVendorQuery,
@@ -8,6 +8,10 @@ import {
   useJobApplicantsQuery,
   useUpdateApplicationStatusMutation,
   useImportMyJobsMutation,
+  useUploadVendorVideoMutation,
+  useRemoveVendorVideoMutation,
+  useAddVendorBusinessMutation,
+  useRemoveVendorBusinessMutation,
 } from "../store/jobsApi.js";
 import RazorpayCheckout from "../components/RazorpayCheckout.jsx";
 import { JOB_TYPE_OPTIONS, PAY_UNIT_OPTIONS } from "../constants/jobTypes.js";
@@ -39,10 +43,18 @@ export default function VendorDashboard() {
   const { data: jobsData } = useMyJobsQuery(undefined, { skip: !vendorData });
   const [createJob, { isLoading: creating, error: createError }] = useCreateJobMutation();
   const [deleteJob] = useDeleteJobMutation();
+  const [uploadVideo, { isLoading: uploadingVideo }] = useUploadVendorVideoMutation();
+  const [removeVideo, { isLoading: removingVideo }] = useRemoveVendorVideoMutation();
+  const [addBusiness, { isLoading: addingBusiness }] = useAddVendorBusinessMutation();
+  const [removeBusiness] = useRemoveVendorBusinessMutation();
+  const videoRef = useRef(null);
   const [form, setForm] = useState(emptyJob);
   const [activeJobId, setActiveJobId] = useState(null);
   const [jobSearch, setJobSearch] = useState("");
   const [jobStatusFilter, setJobStatusFilter] = useState("");
+  const [videoMsg, setVideoMsg] = useState("");
+  const [newBiz, setNewBiz] = useState({ name: "", industry: "", district: "", address: "" });
+  const [bizMsg, setBizMsg] = useState("");
 
   if (vendorLoading) {
     return (
@@ -189,6 +201,136 @@ export default function VendorDashboard() {
                 <p className="text-red-600 text-sm md:col-span-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{createError?.data?.message}</p>
               )}
             </form>
+          </div>
+
+          {/* Intro Video */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-gray-900">Intro Video</h2>
+              <span className="text-xs bg-yellow-100 text-yellow-800 font-semibold px-2 py-0.5 rounded-full">Premium</span>
+            </div>
+            <p className="text-sm text-gray-500">A short video (max 10 MB, MP4/WebM/MOV) shown on your public profile to attract job seekers.</p>
+            {vendor?.profileVideoUrl && (
+              <div className="space-y-2">
+                <video src={vendor.profileVideoUrl} controls className="w-full rounded-lg max-h-48 bg-black" />
+                <button
+                  onClick={async () => {
+                    setVideoMsg("");
+                    try { await removeVideo().unwrap(); setVideoMsg("Video removed."); }
+                    catch { setVideoMsg("Remove failed."); }
+                  }}
+                  disabled={removingVideo}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium"
+                >
+                  {removingVideo ? "Removing…" : "Remove video"}
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <input
+                ref={videoRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setVideoMsg("");
+                  const fd = new FormData();
+                  fd.append("video", file);
+                  try { await uploadVideo(fd).unwrap(); setVideoMsg("Video uploaded."); }
+                  catch (e2) { setVideoMsg(e2?.data?.message || "Upload failed."); }
+                  finally { if (videoRef.current) videoRef.current.value = ""; }
+                }}
+                disabled={uploadingVideo}
+              />
+              {uploadingVideo && <span className="text-sm text-gray-500">Uploading…</span>}
+            </div>
+            {videoMsg && <p className="text-sm text-gray-600">{videoMsg}</p>}
+          </div>
+
+          {/* Multiple Businesses */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-4">
+            <h2 className="font-bold text-gray-900">My Businesses</h2>
+            <p className="text-sm text-gray-500">Manage multiple businesses under your account. Each can be associated with job postings.</p>
+
+            {/* Primary business */}
+            <div className="border border-primary-200 bg-primary-50 rounded-lg p-3 text-sm">
+              <p className="font-semibold text-primary-900">{vendor?.orgName} <span className="text-xs font-normal text-primary-600 ml-1">Primary</span></p>
+              {vendor?.industry && <p className="text-primary-700">{vendor.industry}</p>}
+              {vendor?.district && <p className="text-primary-700">{vendor.district}</p>}
+            </div>
+
+            {/* Additional businesses */}
+            {(vendor?.businesses || []).map((b) => (
+              <div key={b._id} className="border border-gray-200 rounded-lg p-3 text-sm flex justify-between items-start gap-2">
+                <div>
+                  <p className="font-semibold text-gray-900">{b.name}</p>
+                  {b.industry && <p className="text-gray-600">{b.industry}</p>}
+                  {b.district && <p className="text-gray-500">{b.district}</p>}
+                  {b.address && <p className="text-gray-500">{b.address}</p>}
+                </div>
+                <button
+                  onClick={async () => {
+                    setBizMsg("");
+                    try { await removeBusiness(b._id).unwrap(); }
+                    catch { setBizMsg("Remove failed."); }
+                  }}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium shrink-0"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+
+            {/* Add business form */}
+            <div className="border border-dashed border-gray-300 rounded-lg p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Add another business</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  className={inputCls}
+                  placeholder="Business name *"
+                  value={newBiz.name}
+                  onChange={(e) => setNewBiz({ ...newBiz, name: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Industry"
+                  value={newBiz.industry}
+                  onChange={(e) => setNewBiz({ ...newBiz, industry: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="District"
+                  value={newBiz.district}
+                  onChange={(e) => setNewBiz({ ...newBiz, district: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Address"
+                  value={newBiz.address}
+                  onChange={(e) => setNewBiz({ ...newBiz, address: e.target.value })}
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  if (!newBiz.name.trim()) return;
+                  setBizMsg("");
+                  try {
+                    await addBusiness(newBiz).unwrap();
+                    setNewBiz({ name: "", industry: "", district: "", address: "" });
+                    setBizMsg("Business added.");
+                  } catch (e2) {
+                    setBizMsg(e2?.data?.message || "Add failed.");
+                  }
+                }}
+                disabled={addingBusiness || !newBiz.name.trim()}
+                className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              >
+                {addingBusiness ? "Adding…" : "Add Business"}
+              </button>
+              {bizMsg && <p className="text-sm text-gray-600">{bizMsg}</p>}
+            </div>
           </div>
 
           <JobImportCard />

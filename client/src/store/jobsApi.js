@@ -299,6 +299,30 @@ export const jobsApi = createApi({
       query: ({ id, ...body }) => ({ url: `/workers/${id}/verify`, method: "PATCH", body }),
       invalidatesTags: ["Worker"],
     }),
+    uploadWorkerVideo: builder.mutation({
+      query: (formData) => ({ url: "/workers/me/video", method: "POST", body: formData }),
+      invalidatesTags: ["Worker"],
+    }),
+    removeWorkerVideo: builder.mutation({
+      query: () => ({ url: "/workers/me/video", method: "DELETE" }),
+      invalidatesTags: ["Worker"],
+    }),
+    uploadVendorVideo: builder.mutation({
+      query: (formData) => ({ url: "/vendors/me/video", method: "POST", body: formData }),
+      invalidatesTags: ["Vendor"],
+    }),
+    removeVendorVideo: builder.mutation({
+      query: () => ({ url: "/vendors/me/video", method: "DELETE" }),
+      invalidatesTags: ["Vendor"],
+    }),
+    addVendorBusiness: builder.mutation({
+      query: (body) => ({ url: "/vendors/me/businesses", method: "POST", body }),
+      invalidatesTags: ["Vendor"],
+    }),
+    removeVendorBusiness: builder.mutation({
+      query: (id) => ({ url: `/vendors/me/businesses/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Vendor"],
+    }),
 
     // Chat
     listConversations: builder.query({
@@ -350,6 +374,10 @@ export const jobsApi = createApi({
     }),
     deleteBlog: builder.mutation({
       query: (id) => ({ url: `/admin/blog/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Blog"],
+    }),
+    importBlogs: builder.mutation({
+      query: (formData) => ({ url: "/admin/blog/import", method: "POST", body: formData }),
       invalidatesTags: ["Blog"],
     }),
   }),
@@ -439,4 +467,11 @@ export const {
   useGetConversationQuery,
   useSendMessageMutation,
   useUnreadCountQuery,
+  useImportBlogsMutation,
+  useUploadWorkerVideoMutation,
+  useRemoveWorkerVideoMutation,
+  useUploadVendorVideoMutation,
+  useRemoveVendorVideoMutation,
+  useAddVendorBusinessMutation,
+  useRemoveVendorBusinessMutation,
 } = jobsApi;

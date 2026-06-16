@@ -58,6 +58,30 @@ export default function VendorProfile() {
         </div>
       </div>
 
+      {vendor.profileVideoUrl && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
+          <h2 className="font-bold text-gray-900 mb-3">Intro Video</h2>
+          <video src={vendor.profileVideoUrl} controls className="w-full rounded-lg max-h-64 bg-black" />
+        </div>
+      )}
+
+      {vendor.businesses?.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
+          <h2 className="font-bold text-gray-900 mb-3">Other Businesses</h2>
+          <div className="space-y-2">
+            {vendor.businesses.map((b) => (
+              <div key={b._id} className="border border-gray-100 rounded-lg p-3 text-sm">
+                <p className="font-semibold text-gray-900">{b.name}</p>
+                {(b.industry || b.district) && (
+                  <p className="text-gray-500 mt-0.5">{[b.industry, b.district].filter(Boolean).join(" · ")}</p>
+                )}
+                {b.address && <p className="text-gray-400 text-xs mt-0.5">{b.address}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
         <h2 className="font-bold text-gray-900 mb-3">Reviews</h2>
         {reviewsData?.items?.length ? (
