@@ -24,6 +24,7 @@ import AdminBanners from "./pages/admin/AdminBanners.jsx";
 import AdminImport from "./pages/admin/AdminImport.jsx";
 import AdminJobs from "./pages/admin/AdminJobs.jsx";
 import AdminBlog from "./pages/admin/AdminBlog.jsx";
+import AdminFees from "./pages/admin/AdminFees.jsx";
 import BlogList from "./pages/BlogList.jsx";
 import BlogPost from "./pages/BlogPost.jsx";
 import VendorProfile from "./pages/VendorProfile.jsx";
@@ -195,6 +196,7 @@ export default function App() {
           <Route path="banners" element={<AdminBanners />} />
           <Route path="webhooks" element={<AdminWebhooks />} />
           <Route path="import" element={<AdminImport />} />
+          <Route path="fees" element={<AdminFees />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="broadcasts/email" element={<AdminBroadcastEmail />} />
           <Route path="broadcasts/sms" element={<AdminBroadcastSms />} />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   useGetJobQuery,
@@ -11,6 +11,7 @@ import { jobTypeLabel, formatPay } from "../constants/jobTypes.js";
 
 export default function JobDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
   const { data, isLoading } = useGetJobQuery(id);
   const [apply, { isLoading: applying, isSuccess, error }] = useApplyToJobMutation();
@@ -52,12 +53,23 @@ export default function JobDetail() {
           <div className="w-14 h-14 rounded-xl bg-primary-50 text-primary-700 font-bold text-xl flex items-center justify-center shrink-0">
             {initial}
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
             <p className="text-gray-600 mt-0.5">
               {job.vendorSummary?.orgName} · {job.location?.district}
             </p>
           </div>
+          {user && job.vendorSummary?.vendorUserId && String(user.id || user._id) !== job.vendorSummary.vendorUserId && (
+            <button
+              onClick={() => navigate(`/chat/${job.vendorSummary.vendorUserId}`)}
+              className="shrink-0 inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
+              </svg>
+              Chat
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 text-xs mt-4">
           {job.category && <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>}

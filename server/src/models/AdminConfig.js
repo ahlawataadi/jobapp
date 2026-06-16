@@ -49,6 +49,20 @@ const adminConfigSchema = new mongoose.Schema({
     keySecret: { type: String, default: "" },
     webhookSecret: { type: String, default: "" },
   },
+  // Pricing & fees (all amounts in ₹)
+  contactPacks: {
+    starter:  { credits: { type: Number, default: 10  }, price: { type: Number, default: 49  } },
+    standard: { credits: { type: Number, default: 25  }, price: { type: Number, default: 199 } },
+    pro:      { credits: { type: Number, default: 40  }, price: { type: Number, default: 499 } },
+  },
+  subscriptionPlans: {
+    basic:      { priceMonthly: { type: Number, default: 999   }, features: { type: String, default: "Up to 10 contact unlocks/month, basic support" } },
+    pro:        { priceMonthly: { type: Number, default: 2999  }, features: { type: String, default: "Up to 30 contact unlocks/month, priority support, featured listings" } },
+    enterprise: { priceMonthly: { type: Number, default: 9999  }, features: { type: String, default: "Unlimited contact unlocks, dedicated account manager, API access" } },
+  },
+  featuredWorkerFee: {
+    pricePerWeek: { type: Number, default: 99 },
+  },
 });
 
 export const getConfig = async () => {

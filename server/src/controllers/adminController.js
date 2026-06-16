@@ -32,6 +32,9 @@ export const getAdminConfig = async (req, res, next) => {
         otpSettings: config.otpSettings,
         googleMapsApiKey: config.googleMapsApiKey,
         paymentGateway: { provider: config.paymentGateway?.provider, keyId: config.paymentGateway?.keyId },
+        contactPacks: config.contactPacks,
+        subscriptionPlans: config.subscriptionPlans,
+        featuredWorkerFee: config.featuredWorkerFee,
       },
     });
   } catch (err) {
@@ -68,6 +71,32 @@ export const updateAdminConfig = async (req, res, next) => {
       };
     }
     if (typeof googleMapsApiKey === "string") config.googleMapsApiKey = googleMapsApiKey;
+
+    // Fee / pricing updates
+    const { contactPacks, subscriptionPlans, featuredWorkerFee } = req.body;
+    if (contactPacks && typeof contactPacks === "object") {
+      const cp = config.contactPacks || {};
+      for (const tier of ["starter", "standard", "pro"]) {
+        if (contactPacks[tier]) {
+          if (typeof contactPacks[tier].credits === "number") cp[tier] = { ...cp[tier], credits: contactPacks[tier].credits };
+          if (typeof contactPacks[tier].price === "number") cp[tier] = { ...cp[tier], price: contactPacks[tier].price };
+        }
+      }
+      config.contactPacks = cp;
+    }
+    if (subscriptionPlans && typeof subscriptionPlans === "object") {
+      const sp = config.subscriptionPlans || {};
+      for (const tier of ["basic", "pro", "enterprise"]) {
+        if (subscriptionPlans[tier]) {
+          if (typeof subscriptionPlans[tier].priceMonthly === "number") sp[tier] = { ...sp[tier], priceMonthly: subscriptionPlans[tier].priceMonthly };
+          if (typeof subscriptionPlans[tier].features === "string") sp[tier] = { ...sp[tier], features: subscriptionPlans[tier].features };
+        }
+      }
+      config.subscriptionPlans = sp;
+    }
+    if (featuredWorkerFee && typeof featuredWorkerFee.pricePerWeek === "number") {
+      config.featuredWorkerFee = { pricePerWeek: featuredWorkerFee.pricePerWeek };
+    }
 
     await config.save();
     res.json({ config });
@@ -299,7 +328,7 @@ export const adminCreateJob = async (req, res, next) => {
 
     const job = await Job.create({
       vendorId: vendor._id,
-      vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating },
+      vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating, vendorUserId: String(vendor.userId) },
       title,
       description,
       category,
@@ -513,7 +542,7 @@ async function resolveVendorFromRow(row) {
 export function buildJobDoc(row, vendor) {
   return {
     vendorId: vendor._id,
-    vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating },
+    vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating, vendorUserId: String(vendor.userId) },
     title: row.title,
     description: row.description,
     category: row.category || "",
