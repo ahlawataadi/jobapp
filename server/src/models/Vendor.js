@@ -23,9 +23,18 @@ const vendorSchema = new mongoose.Schema(
       default: "not_required",
     },
     logoUrl: { type: String, default: null },
+    profileVideoUrl: { type: String, default: null },  // short intro video (premium)
     avgRating: { type: Number, default: 0 },
     documents: [{ type: String }],
     source: { type: String, default: "manual" },
+    businesses: [
+      {
+        name: { type: String, required: true, trim: true },
+        industry: { type: String, trim: true, default: "" },
+        district: { type: String, trim: true, default: "" },
+        address: { type: String, trim: true, default: "" },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -13,7 +13,10 @@ const PAY_SUFFIX = { hourly: "/hr", daily: "/day", monthly: "/mo", fixed: "" };
 function formatRate(wp) {
   if (!wp) return null;
   if (wp.payPreference === "hourly" && wp.hourlyRate) return `₹${wp.hourlyRate.toLocaleString("en-IN")}/hr`;
+  if (wp.payPreference === "monthly" && wp.monthlyRate) return `₹${wp.monthlyRate.toLocaleString("en-IN")}/mo`;
+  if (wp.payPreference === "daily" && wp.dailyRate) return `₹${wp.dailyRate.toLocaleString("en-IN")}/day`;
   if (wp.dailyRate) return `₹${wp.dailyRate.toLocaleString("en-IN")}/day`;
+  if (wp.monthlyRate) return `₹${wp.monthlyRate.toLocaleString("en-IN")}/mo`;
   return null;
 }
 
@@ -179,6 +182,14 @@ export default function WorkerPublicProfile() {
             </div>
           )}
           {msg && <p className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">{msg}</p>}
+        </div>
+      )}
+
+      {/* Intro Video */}
+      {wp.profileVideoUrl && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
+          <h2 className="font-bold text-gray-900 mb-3">Intro Video</h2>
+          <video src={wp.profileVideoUrl} controls className="w-full rounded-lg max-h-64 bg-black" />
         </div>
       )}
 

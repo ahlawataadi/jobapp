@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   useGetAdminConfigQuery,
   useUpdateAdminConfigMutation,
@@ -203,11 +204,14 @@ export default function AdminPanel() {
           <tbody>
             {vendorsData?.items?.map((v) => (
               <tr key={v._id} className="border-b border-gray-100">
-                <td className="px-3 py-2 font-medium text-gray-900">{v.orgName}</td>
+                <td className="px-3 py-2 font-medium text-gray-900">
+                  <Link to={`/vendors/${v._id}`} className="hover:text-primary-700">{v.orgName}</Link>
+                </td>
                 <td className="px-3 py-2 text-gray-600">{v.district}</td>
                 <td className="px-3 py-2 capitalize text-gray-600">{v.status}</td>
                 <td className="px-3 py-2 text-gray-600">{v.paymentStatus}</td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 flex items-center gap-2">
+                  <Link to={`/vendors/${v._id}`} className="text-xs text-primary-600 hover:text-primary-800 font-medium">View</Link>
                   <select
                     value={v.status}
                     onChange={(e) => updateVendorStatus({ id: v._id, status: e.target.value })}
@@ -275,20 +279,25 @@ export default function AdminPanel() {
                   </span>
                 </td>
                 <td className="px-3 py-2">
-                  {u.role === "admin" ? (
-                    <span className="text-xs text-gray-400">—</span>
-                  ) : (
-                    <button
-                      onClick={() => updateUserStatus({ id: u._id, status: u.status === "suspended" ? "active" : "suspended" })}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                        u.status === "suspended"
-                          ? "bg-green-50 text-green-700 hover:bg-green-100"
-                          : "bg-red-50 text-red-700 hover:bg-red-100"
-                      }`}
-                    >
-                      {u.status === "suspended" ? "Reactivate" : "Suspend"}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {u.role === "seeker" && (
+                      <Link to={`/workers/${u._id}`} className="text-xs text-primary-600 hover:text-primary-800 font-medium">View</Link>
+                    )}
+                    {u.role === "admin" ? (
+                      <span className="text-xs text-gray-400">—</span>
+                    ) : (
+                      <button
+                        onClick={() => updateUserStatus({ id: u._id, status: u.status === "suspended" ? "active" : "suspended" })}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          u.status === "suspended"
+                            ? "bg-green-50 text-green-700 hover:bg-green-100"
+                            : "bg-red-50 text-red-700 hover:bg-red-100"
+                        }`}
+                      >
+                        {u.status === "suspended" ? "Reactivate" : "Suspend"}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

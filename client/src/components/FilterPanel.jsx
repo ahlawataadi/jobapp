@@ -112,7 +112,40 @@ export default function FilterPanel({ filters, onChange }) {
         >
           <option value="recent">Most recent</option>
           <option value="salary">Highest salary</option>
+          <option value="salary_asc">Lowest salary</option>
         </select>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <label className="block font-semibold text-gray-700 mb-2">Near me</label>
+        {filters.lat ? (
+          <div className="space-y-2">
+            <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-2 py-1">
+              Showing jobs within {filters.radius || 25} km of your location
+            </p>
+            <button
+              type="button"
+              onClick={() => onChange({ ...filters, lat: undefined, lng: undefined, radius: undefined })}
+              className="text-xs text-red-600 hover:text-red-800 font-medium"
+            >
+              Clear location
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.geolocation) return alert("Geolocation is not supported by your browser.");
+              navigator.geolocation.getCurrentPosition(
+                (pos) => onChange({ ...filters, lat: pos.coords.latitude, lng: pos.coords.longitude, radius: 25 }),
+                () => alert("Unable to retrieve your location. Please allow location access and try again.")
+              );
+            }}
+            className="w-full border border-gray-300 hover:border-primary-400 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          >
+            <span>📍</span> Find jobs near me
+          </button>
+        )}
       </div>
     </div>
   );

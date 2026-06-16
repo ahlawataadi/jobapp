@@ -59,6 +59,7 @@ export default function JobSearch() {
             >
               <option value="recent">Most recent</option>
               <option value="salary">Highest salary</option>
+              <option value="salary_asc">Lowest salary</option>
             </select>
           </div>
         </div>

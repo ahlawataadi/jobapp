@@ -6,7 +6,7 @@ const CATEGORY_ENUM = ["household", "home-repair", "automotive", "construction",
 // GET /api/workers?category=&skill=&district=&lat=&lng=&radius=&verified=&page=&limit=
 export const listWorkers = async (req, res, next) => {
   try {
-    const { category, skill, district, lat, lng, radius, verified, featured, page = 1, limit = 20 } = req.query;
+    const { category, skill, district, lat, lng, radius, verified, featured, sort = "default", page = 1, limit = 10 } = req.query;
     const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 50);
     const lim = Math.min(Number(limit) || 20, 50);
 
@@ -46,7 +46,13 @@ export const listWorkers = async (req, res, next) => {
         },
       });
     } else {
-      query = User.find(filter).sort({ "workerProfile.featured": -1, "workerProfile.verificationBadge": -1, createdAt: -1 });
+      const sortMap = {
+        rate_low:  { "workerProfile.dailyRate": 1 },
+        rate_high: { "workerProfile.dailyRate": -1 },
+        newest:    { createdAt: -1 },
+        default:   { "workerProfile.featured": -1, "workerProfile.verificationBadge": -1, createdAt: -1 },
+      };
+      query = User.find(filter).sort(sortMap[sort] || sortMap.default);
     }
 
     const [items, total] = await Promise.all([
@@ -103,6 +109,7 @@ export const updateMyWorkerProfile = async (req, res, next) => {
       bio,
       hourlyRate,
       dailyRate,
+      monthlyRate,
       payPreference,
       district,
       city,
@@ -118,6 +125,7 @@ export const updateMyWorkerProfile = async (req, res, next) => {
     if (bio !== undefined) user.workerProfile.bio = String(bio).slice(0, 1000);
     if (hourlyRate !== undefined) user.workerProfile.hourlyRate = Math.max(0, Number(hourlyRate) || 0);
     if (dailyRate !== undefined) user.workerProfile.dailyRate = Math.max(0, Number(dailyRate) || 0);
+    if (monthlyRate !== undefined) user.workerProfile.monthlyRate = Math.max(0, Number(monthlyRate) || 0);
     if (payPreference !== undefined) user.workerProfile.payPreference = payPreference;
     if (district !== undefined) user.workerProfile.location.district = district;
     if (city !== undefined) user.workerProfile.location.city = city;
@@ -195,6 +203,34 @@ export const buyContactPack = async (req, res, next) => {
       contactCredits: vendorUser.contactCredits,
       pack: PACKS[pack],
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/workers/me/video — upload short intro video (premium feature)
+export const uploadWorkerVideo = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!req.file) return res.status(400).json({ message: "No video file uploaded" });
+
+    user.workerProfile.profileVideoUrl = `/uploads/videos/${req.file.filename}`;
+    await user.save();
+    res.json({ profileVideoUrl: user.workerProfile.profileVideoUrl });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/workers/me/video
+export const removeWorkerVideo = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.workerProfile.profileVideoUrl = "";
+    await user.save();
+    res.json({ profileVideoUrl: "" });
   } catch (err) {
     next(err);
   }

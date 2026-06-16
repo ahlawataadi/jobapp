@@ -2,18 +2,17 @@ import { useState } from "react";
 import { useListWorkersQuery } from "../store/jobsApi.js";
 import { WORKER_CATEGORIES } from "../constants/categories.js";
 import WorkerCard from "../components/WorkerCard.jsx";
+import Pagination from "../components/Pagination.jsx";
 
 const inputCls =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
 
-const btn =
-  "border border-gray-300 hover:border-primary-400 disabled:opacity-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors";
-
 export default function WorkerSearch() {
   const [filters, setFilters] = useState({ category: "", skill: "", district: "", verified: "" });
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState("default");
 
-  const { data, isLoading } = useListWorkersQuery({ ...filters, page, limit: 20 });
+  const { data, isLoading } = useListWorkersQuery({ ...filters, page, limit: 10, sort });
   const workers = data?.items || [];
   const pages = data?.pages || 1;
 
@@ -92,6 +91,19 @@ export default function WorkerSearch() {
 
         {/* Results */}
         <div>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <p className="text-sm text-gray-500">{data?.total || 0} workers found</p>
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none"
+              value={sort}
+              onChange={(e) => { setSort(e.target.value); setPage(1); }}
+            >
+              <option value="default">Default</option>
+              <option value="rate_low">Rate: Low to High</option>
+              <option value="rate_high">Rate: High to Low</option>
+              <option value="newest">Newest first</option>
+            </select>
+          </div>
           {isLoading ? (
             <div className="grid sm:grid-cols-2 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -105,20 +117,12 @@ export default function WorkerSearch() {
             </div>
           ) : (
             <>
-              <p className="text-sm text-gray-500 mb-4">{data?.total || 0} workers found</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 {workers.map((w) => (
                   <WorkerCard key={w._id} worker={w} />
                 ))}
               </div>
-
-              {pages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
-                  <button className={btn} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</button>
-                  <span className="px-3 py-2 text-sm text-gray-600">Page {page} / {pages}</span>
-                  <button className={btn} disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>Next</button>
-                </div>
-              )}
+              <Pagination page={page} pages={pages} onChange={(p) => { setPage(p); window.scrollTo(0, 0); }} />
             </>
           )}
         </div>

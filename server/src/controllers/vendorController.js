@@ -105,10 +105,75 @@ export const getFeaturedVendors = async (req, res, next) => {
 export const getVendorPublic = async (req, res, next) => {
   try {
     const vendor = await Vendor.findById(req.params.id).select(
-      "orgName industry address district avgRating status logoUrl userId"
+      "orgName industry address district avgRating status logoUrl profileVideoUrl businesses userId"
     );
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
     res.json({ vendor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/vendors/me/video
+export const uploadVendorVideo = async (req, res, next) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.user._id });
+    if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
+    if (!req.file) return res.status(400).json({ message: "No video file uploaded" });
+
+    vendor.profileVideoUrl = `/uploads/videos/${req.file.filename}`;
+    await vendor.save();
+    res.json({ vendor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/vendors/me/video
+export const removeVendorVideo = async (req, res, next) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.user._id });
+    if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
+    vendor.profileVideoUrl = null;
+    await vendor.save();
+    res.json({ vendor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/vendors/me/businesses
+export const addBusiness = async (req, res, next) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.user._id });
+    if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
+
+    const { name, industry, district, address } = req.body;
+    if (!name) return res.status(400).json({ message: "Business name is required" });
+    if (vendor.businesses.length >= 10) {
+      return res.status(400).json({ message: "Maximum 10 businesses allowed" });
+    }
+
+    vendor.businesses.push({ name, industry: industry || "", district: district || "", address: address || "" });
+    await vendor.save();
+    res.status(201).json({ businesses: vendor.businesses });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/vendors/me/businesses/:id
+export const removeBusiness = async (req, res, next) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.user._id });
+    if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
+
+    const business = vendor.businesses.id(req.params.id);
+    if (!business) return res.status(404).json({ message: "Business not found" });
+
+    business.deleteOne();
+    await vendor.save();
+    res.json({ businesses: vendor.businesses });
   } catch (err) {
     next(err);
   }

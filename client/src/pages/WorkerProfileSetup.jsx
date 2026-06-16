@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { useUpdateMyWorkerProfileMutation } from "../store/jobsApi.js";
+import {
+  useUpdateMyWorkerProfileMutation,
+  useUploadWorkerVideoMutation,
+  useRemoveWorkerVideoMutation,
+} from "../store/jobsApi.js";
 import { WORKER_CATEGORIES, skillsForCategory } from "../constants/categories.js";
 
 const inputCls =
@@ -52,6 +56,9 @@ function AvailabilityPicker({ value, onChange }) {
 export default function WorkerProfileSetup() {
   const { user } = useSelector((s) => s.auth);
   const [updateProfile, { isLoading }] = useUpdateMyWorkerProfileMutation();
+  const [uploadVideo, { isLoading: uploadingVideo }] = useUploadWorkerVideoMutation();
+  const [removeVideo, { isLoading: removingVideo }] = useRemoveWorkerVideoMutation();
+  const videoRef = useRef(null);
 
   const [form, setForm] = useState({
     skillCategory: "",
@@ -60,6 +67,7 @@ export default function WorkerProfileSetup() {
     payPreference: "daily",
     hourlyRate: "",
     dailyRate: "",
+    monthlyRate: "",
     district: "",
     city: "",
     experience: "",
@@ -68,6 +76,7 @@ export default function WorkerProfileSetup() {
   });
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [videoMsg, setVideoMsg] = useState("");
 
   useEffect(() => {
     const wp = user?.workerProfile;
@@ -79,6 +88,7 @@ export default function WorkerProfileSetup() {
         payPreference: wp.payPreference || "daily",
         hourlyRate: wp.hourlyRate || "",
         dailyRate: wp.dailyRate || "",
+        monthlyRate: wp.monthlyRate || "",
         district: wp.location?.district || "",
         city: wp.location?.city || "",
         experience: wp.experience || "",
@@ -126,6 +136,7 @@ export default function WorkerProfileSetup() {
         ...form,
         hourlyRate: Number(form.hourlyRate) || 0,
         dailyRate: Number(form.dailyRate) || 0,
+        monthlyRate: Number(form.monthlyRate) || 0,
       }).unwrap();
       setMsg("Profile updated! Employers can now find you.");
     } catch (e2) {
@@ -227,7 +238,7 @@ export default function WorkerProfileSetup() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className={label}>Hourly rate (₹)</label>
               <input
@@ -248,6 +259,17 @@ export default function WorkerProfileSetup() {
                 placeholder="e.g. 800"
                 value={form.dailyRate}
                 onChange={(e) => set("dailyRate", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={label}>Monthly rate (₹)</label>
+              <input
+                type="number"
+                min="0"
+                className={inputCls}
+                placeholder="e.g. 18000"
+                value={form.monthlyRate}
+                onChange={(e) => set("monthlyRate", e.target.value)}
               />
             </div>
           </div>
@@ -322,6 +344,73 @@ export default function WorkerProfileSetup() {
           {isLoading ? "Saving…" : "Save Worker Profile"}
         </button>
       </form>
+
+      {/* Video profile — managed separately, outside main form */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-card space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold text-gray-900">Intro Video</h2>
+          <span className="text-xs bg-yellow-100 text-yellow-800 font-semibold px-2 py-0.5 rounded-full">Premium</span>
+        </div>
+        <p className="text-sm text-gray-500">
+          Upload a short video (max 10 MB, MP4/WebM/MOV) introducing yourself to employers. Premium feature — contact an admin to enable.
+        </p>
+        {user?.subscription?.plan !== "none" && user?.subscription?.plan ? (
+          <>
+            {user?.workerProfile?.profileVideoUrl && (
+              <div className="space-y-2">
+                <video
+                  src={user.workerProfile.profileVideoUrl}
+                  controls
+                  className="w-full rounded-lg max-h-48 bg-black"
+                />
+                <button
+                  onClick={async () => {
+                    setVideoMsg("");
+                    try {
+                      await removeVideo().unwrap();
+                      setVideoMsg("Video removed.");
+                    } catch { setVideoMsg("Remove failed."); }
+                  }}
+                  disabled={removingVideo}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium"
+                >
+                  {removingVideo ? "Removing…" : "Remove video"}
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <input
+                ref={videoRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setVideoMsg("");
+                  const fd = new FormData();
+                  fd.append("video", file);
+                  try {
+                    await uploadVideo(fd).unwrap();
+                    setVideoMsg("Video uploaded successfully.");
+                  } catch (e2) {
+                    setVideoMsg(e2?.data?.message || "Upload failed.");
+                  } finally {
+                    if (videoRef.current) videoRef.current.value = "";
+                  }
+                }}
+                disabled={uploadingVideo}
+              />
+              {uploadingVideo && <span className="text-sm text-gray-500">Uploading…</span>}
+            </div>
+          </>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm text-yellow-800">
+            Upgrade to a premium plan to upload an intro video. Contact admin to activate your subscription.
+          </div>
+        )}
+        {videoMsg && <p className="text-sm text-gray-600">{videoMsg}</p>}
+      </div>
     </div>
   );
 }

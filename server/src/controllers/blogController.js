@@ -1,6 +1,7 @@
 import Blog from "../models/Blog.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
 import { runBlogAutomationOnce } from "../jobs/blogScheduler.js";
+import { parseCsv } from "../utils/csv.js";
 
 const slugify = (s) =>
   String(s || "")
@@ -179,6 +180,49 @@ export const generateBlogNow = async (req, res, next) => {
   try {
     const post = await runBlogAutomationOnce();
     res.status(201).json({ post });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/admin/blog/import — multipart CSV field "file"
+// CSV columns: title, content, excerpt, coverImage, category, tags (comma-sep), status
+export const importBlogs = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "CSV file is required" });
+
+    const rows = parseCsv(req.file.buffer.toString("utf8"));
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const row of rows) {
+      try {
+        if (!row.title || !row.content) {
+          results.skipped += 1;
+          continue;
+        }
+        const finalStatus = row.status === "published" ? "published" : "draft";
+        // eslint-disable-next-line no-await-in-loop
+        await Blog.create({
+          title: row.title,
+          // eslint-disable-next-line no-await-in-loop
+          slug: await uniqueSlug(row.slug || row.title),
+          content: row.content,
+          excerpt: row.excerpt || "",
+          coverImage: row.coverImage || "",
+          tags: row.tags ? row.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+          category: row.category || "",
+          status: finalStatus,
+          authorId: req.user?._id,
+          authorName: req.user?.name || "Admin",
+          publishedAt: finalStatus === "published" ? new Date() : undefined,
+        });
+        results.created += 1;
+      } catch (e) {
+        results.errors.push(e.message);
+      }
+    }
+
+    res.json(results);
   } catch (err) {
     next(err);
   }

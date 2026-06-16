@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useListAdminBlogsQuery,
   useGetAdminBlogQuery,
@@ -6,7 +6,19 @@ import {
   useGenerateBlogMutation,
   useUpdateBlogMutation,
   useDeleteBlogMutation,
+  useImportBlogsMutation,
 } from "../../store/jobsApi.js";
+
+const BLOG_CATEGORIES = [
+  { value: "", label: "— General —" },
+  { value: "career-tips", label: "Career Tips" },
+  { value: "industry-news", label: "Industry News" },
+  { value: "government-jobs", label: "Government Jobs" },
+  { value: "haryana", label: "Haryana Focus" },
+  { value: "agriculture", label: "Agriculture" },
+  { value: "technology", label: "Technology" },
+  { value: "lifestyle", label: "Lifestyle" },
+];
 
 const input =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
@@ -31,9 +43,13 @@ export default function AdminBlog() {
   const [generateBlog, { isLoading: generating }] = useGenerateBlogMutation();
   const [updateBlog, { isLoading: updating }] = useUpdateBlogMutation();
   const [deleteBlog] = useDeleteBlogMutation();
+  const [importBlogs, { isLoading: importing }] = useImportBlogsMutation();
   const [form, setForm] = useState(EMPTY);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [importMsg, setImportMsg] = useState("");
+  const [importErr, setImportErr] = useState("");
+  const fileRef = useRef(null);
 
   useEffect(() => {
     if (editingId && full?.post) {
@@ -103,6 +119,24 @@ export default function AdminBlog() {
     }
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportErr("");
+    setImportMsg("");
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await importBlogs(fd).unwrap();
+      setImportMsg(`Imported ${res.created} posts, skipped ${res.skipped}.${res.errors.length ? ` Errors: ${res.errors.slice(0, 3).join("; ")}` : ""}`);
+      refetch();
+    } catch (e2) {
+      setImportErr(e2?.data?.message || "Import failed");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   const posts = data?.items || [];
 
   return (
@@ -140,7 +174,11 @@ export default function AdminBlog() {
             </div>
             <div>
               <label className={label}>Category</label>
-              <input className={input} value={form.category} onChange={(e) => set("category", e.target.value)} />
+              <select className={input} value={form.category} onChange={(e) => set("category", e.target.value)}>
+                {BLOG_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div>
@@ -186,6 +224,20 @@ export default function AdminBlog() {
             )}
           </div>
         </form>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
+        <h2 className="font-bold text-gray-900 mb-2">Import posts from CSV</h2>
+        <p className="text-xs text-gray-500 mb-3">
+          CSV columns: <code className="bg-gray-100 px-1 rounded">title, content, excerpt, coverImage, category, tags, status, slug</code>.
+          Rows missing title or content are skipped. Status must be <em>published</em> or defaults to <em>draft</em>.
+        </p>
+        {importMsg && <p className="text-green-700 text-sm bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-3">{importMsg}</p>}
+        {importErr && <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3">{importErr}</p>}
+        <div className="flex items-center gap-3">
+          <input ref={fileRef} type="file" accept=".csv" onChange={handleImport} disabled={importing} className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50 cursor-pointer" />
+          {importing && <span className="text-sm text-gray-500">Importing…</span>}
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
