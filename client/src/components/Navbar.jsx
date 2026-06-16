@@ -63,7 +63,7 @@ export default function Navbar() {
           <Link to="/jobs" className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             Find Jobs
           </Link>
-          <Link to="/workers" className="hidden sm:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+          <Link to="/workers" className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             Find Workers
           </Link>
           <Link to="/blog" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
