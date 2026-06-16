@@ -11,6 +11,7 @@ import {
   useAdminCreateJobMutation,
   useListEtlRunsQuery,
 } from "../store/jobsApi.js";
+import { JOB_TYPE_OPTIONS, PAY_UNIT_OPTIONS } from "../constants/jobTypes.js";
 import Pagination from "../components/Pagination.jsx";
 
 const ETL_STATUS_COLOR = {
@@ -63,7 +64,7 @@ export default function AdminPanel() {
 
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", phone: "", role: "seeker" });
   const [newVendor, setNewVendor] = useState({ name: "", email: "", password: "", phone: "", orgName: "", industry: "", address: "", district: "", status: "active" });
-  const [newJob, setNewJob] = useState({ vendorId: "", title: "", description: "", category: "", industry: "", district: "", city: "", jobType: "full-time", salaryMin: "", salaryMax: "" });
+  const [newJob, setNewJob] = useState({ vendorId: "", title: "", description: "", category: "", industry: "", district: "", city: "", jobType: "full-time", payUnit: "month", salaryMin: "", salaryMax: "" });
   const [newUserMsg, setNewUserMsg] = useState("");
   const [newVendorMsg, setNewVendorMsg] = useState("");
   const [newJobMsg, setNewJobMsg] = useState("");
@@ -97,7 +98,7 @@ export default function AdminPanel() {
         salaryMin: Number(newJob.salaryMin) || 0,
         salaryMax: Number(newJob.salaryMax) || 0,
       }).unwrap();
-      setNewJob({ vendorId: "", title: "", description: "", category: "", industry: "", district: "", city: "", jobType: "full-time", salaryMin: "", salaryMax: "" });
+      setNewJob({ vendorId: "", title: "", description: "", category: "", industry: "", district: "", city: "", jobType: "full-time", payUnit: "month", salaryMin: "", salaryMax: "" });
       setNewJobMsg("Job listing created successfully.");
     } catch {}
   };
@@ -362,10 +363,14 @@ export default function AdminPanel() {
           <input className={inputCls} placeholder="District" required value={newJob.district} onChange={(e) => setNewJob({ ...newJob, district: e.target.value })} />
           <input className={inputCls} placeholder="City" value={newJob.city} onChange={(e) => setNewJob({ ...newJob, city: e.target.value })} />
           <select className={inputCls} value={newJob.jobType} onChange={(e) => setNewJob({ ...newJob, jobType: e.target.value })}>
-            <option value="full-time">full-time</option>
-            <option value="part-time">part-time</option>
-            <option value="contract">contract</option>
-            <option value="internship">internship</option>
+            {JOB_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <select className={inputCls} value={newJob.payUnit} onChange={(e) => setNewJob({ ...newJob, payUnit: e.target.value })}>
+            {PAY_UNIT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
           <input className={inputCls} type="number" placeholder="Salary Min" value={newJob.salaryMin} onChange={(e) => setNewJob({ ...newJob, salaryMin: e.target.value })} />
           <input className={inputCls} type="number" placeholder="Salary Max" value={newJob.salaryMax} onChange={(e) => setNewJob({ ...newJob, salaryMax: e.target.value })} />

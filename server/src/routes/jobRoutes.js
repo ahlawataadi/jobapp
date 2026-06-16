@@ -9,9 +9,11 @@ import {
   compareJobs,
   suggestJobs,
   districtStats,
+  importMyJobs,
 } from "../controllers/jobController.js";
 import { applyToJob, jobApplicants } from "../controllers/applicationController.js";
 import { requireAuth, requireRole, requireVendor } from "../middleware/auth.js";
+import csvUpload from "../middleware/csvUpload.js";
 
 const router = Router();
 
@@ -20,6 +22,14 @@ router.get("/suggest", suggestJobs);
 router.get("/stats/districts", districtStats);
 router.post("/compare", compareJobs);
 router.get("/mine", requireAuth, requireRole("vendor"), requireVendor, listMyJobs);
+router.post(
+  "/import",
+  requireAuth,
+  requireRole("vendor"),
+  requireVendor,
+  csvUpload.single("file"),
+  importMyJobs
+);
 
 router.post("/", requireAuth, requireRole("vendor"), requireVendor, createJob);
 router.get("/:id", getJob);

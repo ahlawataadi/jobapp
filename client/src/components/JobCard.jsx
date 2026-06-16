@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { jobTypeLabel, formatPay } from "../constants/jobTypes.js";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -60,13 +61,13 @@ export default function JobCard({ job, selected, onToggleCompare }) {
           <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>
         )}
         {job.jobType && (
-          <span className="bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full capitalize">
-            {job.jobType}
+          <span className="bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full">
+            {jobTypeLabel(job.jobType)}
           </span>
         )}
-        {(job.salaryMin || job.salaryMax) && (
+        {(job.salaryMin || job.salaryMax || job.payUnit === "fixed") && (
           <span className="bg-accent-50 text-accent-600 px-2.5 py-1 rounded-full font-medium">
-            ₹{job.salaryMin?.toLocaleString()} - ₹{job.salaryMax?.toLocaleString()}
+            {formatPay(job)}
           </span>
         )}
         {job.vendorSummary?.avgRating > 0 && (

@@ -1,6 +1,10 @@
 import Job from "../models/Job.js";
 import Vendor from "../models/Vendor.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
+import { parseCsv } from "../utils/csv.js";
+
+const JOB_TYPES = ["full-time", "part-time", "contract", "internship", "hourly", "daily-wage", "on-demand", "freelance"];
+const PAY_UNITS = ["month", "hour", "day", "fixed"];
 
 export const createJob = async (req, res, next) => {
   try {
@@ -20,6 +24,7 @@ export const createJob = async (req, res, next) => {
       salaryMin,
       salaryMax,
       jobType,
+      payUnit,
     } = req.body;
 
     if (!title || !description || !district) {
@@ -45,6 +50,7 @@ export const createJob = async (req, res, next) => {
       salaryMin,
       salaryMax,
       jobType,
+      payUnit,
     });
 
     dispatchWebhook("job.created", { jobId: job._id, title: job.title, vendorId: job.vendorId });
@@ -183,6 +189,7 @@ export const updateJob = async (req, res, next) => {
       "salaryMin",
       "salaryMax",
       "jobType",
+      "payUnit",
       "status",
     ];
     for (const key of allowed) {
@@ -216,6 +223,51 @@ export const listMyJobs = async (req, res, next) => {
   try {
     const jobs = await Job.find({ vendorId: req.vendor._id }).sort({ createdAt: -1 });
     res.json({ items: jobs });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/jobs/import (vendor, multipart csv field "file")
+// CSV columns: title,description,category,industry,district,city,salaryMin,salaryMax,jobType,payUnit
+export const importMyJobs = async (req, res, next) => {
+  try {
+    const vendor = req.vendor;
+    if (vendor.status !== "active") {
+      return res.status(403).json({ message: "Vendor account is not active yet" });
+    }
+    if (!req.file) return res.status(400).json({ message: "CSV file is required" });
+
+    const rows = parseCsv(req.file.buffer.toString("utf8"));
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const row of rows) {
+      try {
+        if (!row.title || !row.description || !row.district) {
+          results.skipped += 1;
+          continue;
+        }
+        const job = await Job.create({
+          vendorId: vendor._id,
+          vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating },
+          title: row.title,
+          description: row.description,
+          category: row.category || "",
+          industry: row.industry || "",
+          location: { district: row.district, city: row.city || "", geo: { type: "Point", coordinates: [0, 0] } },
+          salaryMin: Number(row.salaryMin) || 0,
+          salaryMax: Number(row.salaryMax) || 0,
+          jobType: JOB_TYPES.includes(row.jobType) ? row.jobType : "full-time",
+          payUnit: PAY_UNITS.includes(row.payUnit) ? row.payUnit : "month",
+        });
+        dispatchWebhook("job.created", { jobId: job._id, title: job.title, vendorId: job.vendorId });
+        results.created += 1;
+      } catch (e) {
+        results.errors.push(e.message);
+      }
+    }
+
+    res.json(results);
   } catch (err) {
     next(err);
   }

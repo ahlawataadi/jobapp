@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/authSlice.js";
 import { api } from "../api/axios.js";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { useGetAdminConfigQuery } from "../store/jobsApi.js";
+import { useGetAdminConfigQuery, useUnreadCountQuery } from "../store/jobsApi.js";
 
 export default function Navbar() {
   const { user } = useSelector((s) => s.auth);
@@ -12,6 +12,8 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { data: configData } = useGetAdminConfigQuery();
+  const { data: unreadData } = useUnreadCountQuery(undefined, { skip: !user, pollingInterval: 30000 });
+  const unread = unreadData?.count || 0;
   const siteName = configData?.config?.siteName || "Haryana Job Marketplace";
   const logoUrl = configData?.config?.logoUrl;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,6 +63,12 @@ export default function Navbar() {
           <Link to="/jobs" className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             Find Jobs
           </Link>
+          <Link to="/workers" className="hidden sm:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+            Find Workers
+          </Link>
+          <Link to="/blog" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+            Blog
+          </Link>
           <Link to="/about" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             About
           </Link>
@@ -83,6 +91,16 @@ export default function Navbar() {
           {user?.role === "seeker" && (
             <Link to="/applications" className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
               My Applications
+            </Link>
+          )}
+          {user && (
+            <Link to="/chat" className="relative px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+              Chat
+              {unread > 0 && (
+                <span className="absolute top-1 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
             </Link>
           )}
           {user?.role === "admin" && (
@@ -126,6 +144,11 @@ export default function Navbar() {
                   <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                     My Profile
                   </Link>
+                  {user?.role === "seeker" && (
+                    <Link to="/worker-profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
+                      Worker Profile
+                    </Link>
+                  )}
                   {user?.role === "vendor" && (
                     <Link to="/vendor/onboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                       Vendor Onboarding

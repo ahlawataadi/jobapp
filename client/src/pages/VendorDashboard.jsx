@@ -7,8 +7,10 @@ import {
   useDeleteJobMutation,
   useJobApplicantsQuery,
   useUpdateApplicationStatusMutation,
+  useImportMyJobsMutation,
 } from "../store/jobsApi.js";
 import RazorpayCheckout from "../components/RazorpayCheckout.jsx";
+import { JOB_TYPE_OPTIONS, PAY_UNIT_OPTIONS } from "../constants/jobTypes.js";
 
 const emptyJob = {
   title: "",
@@ -18,6 +20,7 @@ const emptyJob = {
   district: "",
   city: "",
   jobType: "full-time",
+  payUnit: "month",
   salaryMin: "",
   salaryMax: "",
 };
@@ -123,10 +126,23 @@ export default function VendorDashboard() {
                 value={form.jobType}
                 onChange={(e) => setForm({ ...form, jobType: e.target.value })}
               >
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
+                {JOB_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={inputCls}
+                value={form.payUnit}
+                onChange={(e) => setForm({ ...form, payUnit: e.target.value })}
+                title="What the salary range is per"
+              >
+                {PAY_UNIT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
               <input
                 placeholder="District"
@@ -174,6 +190,8 @@ export default function VendorDashboard() {
               )}
             </form>
           </div>
+
+          <JobImportCard />
 
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
             <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
@@ -224,6 +242,71 @@ export default function VendorDashboard() {
             </div>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+function JobImportCard() {
+  const [importMyJobs, { isLoading }] = useImportMyJobsMutation();
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!file) return;
+    setError("");
+    setResult(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      setResult(await importMyJobs(fd).unwrap());
+    } catch (err) {
+      setError(err?.data?.message || "Import failed");
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
+      <h2 className="font-bold text-gray-900">Bulk import jobs (CSV)</h2>
+      <p className="text-sm text-gray-500">Header columns:</p>
+      <code className="block text-xs bg-gray-50 border border-gray-200 rounded-lg p-2 overflow-x-auto">
+        title,description,category,industry,district,city,salaryMin,salaryMax,jobType,payUnit
+      </code>
+      <button
+        type="button"
+        onClick={() => {
+          const csv =
+            "title,description,category,industry,district,city,salaryMin,salaryMax,jobType,payUnit\n" +
+            "Helper needed,Daily wage helper for a site,Construction,Labour,Gurugram,Sector 5,500,700,daily-wage,day";
+          const url = window.URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "jobs-template.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        }}
+        className="text-xs text-primary-600 hover:text-primary-800 font-medium"
+      >
+        ↓ Download CSV template
+      </button>
+      <form onSubmit={submit} className="flex items-center gap-3 flex-wrap">
+        <input type="file" accept=".csv,text/csv" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-sm" />
+        <button
+          disabled={!file || isLoading}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+        >
+          {isLoading ? "Importing..." : "Upload & Import"}
+        </button>
+      </form>
+      {error && <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {result && (
+        <p className="text-sm bg-green-50 border border-green-100 text-green-800 rounded-lg px-3 py-2">
+          Created: {result.created} · Skipped: {result.skipped}
+        </p>
       )}
     </div>
   );

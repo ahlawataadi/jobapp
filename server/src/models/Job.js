@@ -24,8 +24,23 @@ const jobSchema = new mongoose.Schema(
     salaryMax: { type: Number, default: 0 },
     jobType: {
       type: String,
-      enum: ["full-time", "part-time", "contract", "internship"],
+      enum: [
+        "full-time",
+        "part-time",
+        "contract",
+        "internship",
+        "hourly",
+        "daily-wage",
+        "on-demand",
+        "freelance",
+      ],
       default: "full-time",
+    },
+    // What the salaryMin/salaryMax range is expressed in.
+    payUnit: {
+      type: String,
+      enum: ["month", "hour", "day", "fixed"],
+      default: "month",
     },
     status: { type: String, enum: ["open", "closed"], default: "open", index: true },
   },

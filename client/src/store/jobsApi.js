@@ -13,7 +13,7 @@ const baseQuery = fetchBaseQuery({
 export const jobsApi = createApi({
   reducerPath: "jobsApi",
   baseQuery,
-  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast"],
+  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast", "Blog", "Worker", "Chat"],
   endpoints: (builder) => ({
     getJobs: builder.query({
       query: (params) => ({ url: "/jobs", params }),
@@ -171,6 +171,14 @@ export const jobsApi = createApi({
       query: (formData) => ({ url: "/admin/import/vendors", method: "POST", body: formData }),
       invalidatesTags: ["Vendor", "User"],
     }),
+    importJobs: builder.mutation({
+      query: (formData) => ({ url: "/admin/import/jobs", method: "POST", body: formData }),
+      invalidatesTags: ["Job"],
+    }),
+    importMyJobs: builder.mutation({
+      query: (formData) => ({ url: "/jobs/import", method: "POST", body: formData }),
+      invalidatesTags: ["Job"],
+    }),
     listEtlRuns: builder.query({
       query: (params) => ({ url: "/admin/etl/status", params }),
     }),
@@ -265,6 +273,85 @@ export const jobsApi = createApi({
     createReview: builder.mutation({
       query: ({ vendorId, ...body }) => ({ url: `/reviews/${vendorId}`, method: "POST", body }),
     }),
+
+    // Workers
+    listWorkers: builder.query({
+      query: (params) => ({ url: "/workers", params }),
+      providesTags: ["Worker"],
+    }),
+    getWorker: builder.query({
+      query: (id) => `/workers/${id}`,
+      providesTags: (r, e, id) => [{ type: "Worker", id }],
+    }),
+    updateMyWorkerProfile: builder.mutation({
+      query: (body) => ({ url: "/workers/me/profile", method: "PUT", body }),
+      invalidatesTags: ["Worker"],
+    }),
+    unlockWorkerContact: builder.mutation({
+      query: (id) => ({ url: `/workers/${id}/unlock`, method: "POST" }),
+      invalidatesTags: (r, e, id) => [{ type: "Worker", id }, "Me"],
+    }),
+    buyContactPack: builder.mutation({
+      query: (body) => ({ url: "/workers/contact-packs/buy", method: "POST", body }),
+      invalidatesTags: ["Me"],
+    }),
+    adminVerifyWorker: builder.mutation({
+      query: ({ id, ...body }) => ({ url: `/workers/${id}/verify`, method: "PATCH", body }),
+      invalidatesTags: ["Worker"],
+    }),
+
+    // Chat
+    listConversations: builder.query({
+      query: () => "/chat",
+      providesTags: ["Chat"],
+    }),
+    getConversation: builder.query({
+      query: ({ userId, ...params }) => ({ url: `/chat/${userId}`, params }),
+      providesTags: (r, e, { userId }) => [{ type: "Chat", id: userId }],
+    }),
+    sendMessage: builder.mutation({
+      query: ({ userId, content }) => ({ url: `/chat/${userId}`, method: "POST", body: { content } }),
+      invalidatesTags: (r, e, { userId }) => ["Chat", { type: "Chat", id: userId }],
+    }),
+    unreadCount: builder.query({
+      query: () => "/chat/unread-count",
+      providesTags: ["Chat"],
+    }),
+
+    // Blog — public
+    listBlogs: builder.query({
+      query: (params) => ({ url: "/blog", params }),
+      providesTags: ["Blog"],
+    }),
+    getBlogBySlug: builder.query({
+      query: (slug) => `/blog/${slug}`,
+      providesTags: (r, e, slug) => [{ type: "Blog", id: slug }],
+    }),
+    // Blog — admin
+    listAdminBlogs: builder.query({
+      query: (params) => ({ url: "/admin/blog", params }),
+      providesTags: ["Blog"],
+    }),
+    getAdminBlog: builder.query({
+      query: (id) => `/admin/blog/${id}`,
+      providesTags: (r, e, id) => [{ type: "Blog", id }],
+    }),
+    createBlog: builder.mutation({
+      query: (body) => ({ url: "/admin/blog", method: "POST", body }),
+      invalidatesTags: ["Blog"],
+    }),
+    generateBlog: builder.mutation({
+      query: () => ({ url: "/admin/blog/generate", method: "POST" }),
+      invalidatesTags: ["Blog"],
+    }),
+    updateBlog: builder.mutation({
+      query: ({ id, ...body }) => ({ url: `/admin/blog/${id}`, method: "PATCH", body }),
+      invalidatesTags: ["Blog"],
+    }),
+    deleteBlog: builder.mutation({
+      query: (id) => ({ url: `/admin/blog/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Blog"],
+    }),
   }),
 });
 
@@ -314,6 +401,16 @@ export const {
   useUpdatePaymentMutation,
   useImportUsersMutation,
   useImportVendorsMutation,
+  useImportJobsMutation,
+  useImportMyJobsMutation,
+  useListBlogsQuery,
+  useGetBlogBySlugQuery,
+  useListAdminBlogsQuery,
+  useGetAdminBlogQuery,
+  useCreateBlogMutation,
+  useGenerateBlogMutation,
+  useUpdateBlogMutation,
+  useDeleteBlogMutation,
   useListEtlRunsQuery,
   useGetAnalyticsQuery,
   useActiveBannerQuery,
@@ -332,4 +429,14 @@ export const {
   useVerifyPaymentMutation,
   useListReviewsQuery,
   useCreateReviewMutation,
+  useListWorkersQuery,
+  useGetWorkerQuery,
+  useUpdateMyWorkerProfileMutation,
+  useUnlockWorkerContactMutation,
+  useBuyContactPackMutation,
+  useAdminVerifyWorkerMutation,
+  useListConversationsQuery,
+  useGetConversationQuery,
+  useSendMessageMutation,
+  useUnreadCountQuery,
 } = jobsApi;

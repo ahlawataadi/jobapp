@@ -7,6 +7,7 @@ import {
   useListReviewsQuery,
   useCreateReviewMutation,
 } from "../store/jobsApi.js";
+import { jobTypeLabel, formatPay } from "../constants/jobTypes.js";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -59,11 +60,9 @@ export default function JobDetail() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 text-xs mt-4">
-          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>
-          <span className="bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full capitalize">{job.jobType}</span>
-          <span className="bg-accent-50 text-accent-600 px-2.5 py-1 rounded-full font-medium">
-            ₹{job.salaryMin?.toLocaleString()} - ₹{job.salaryMax?.toLocaleString()}
-          </span>
+          {job.category && <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>}
+          <span className="bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full">{jobTypeLabel(job.jobType)}</span>
+          <span className="bg-accent-50 text-accent-600 px-2.5 py-1 rounded-full font-medium">{formatPay(job)}</span>
         </div>
       </div>
 

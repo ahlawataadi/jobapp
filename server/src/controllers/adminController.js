@@ -6,6 +6,7 @@ import ActivityLog from "../models/ActivityLog.js";
 import User from "../models/User.js";
 import Job from "../models/Job.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
+import { parseCsv, toCsv } from "../utils/csv.js";
 
 const paginate = (query) => {
   const page = Math.max(Number(query.page) || 1, 1);
@@ -288,7 +289,7 @@ export const adminCreateVendor = async (req, res, next) => {
 
 export const adminCreateJob = async (req, res, next) => {
   try {
-    const { vendorId, title, description, category, industry, district, city, salaryMin, salaryMax, jobType } = req.body;
+    const { vendorId, title, description, category, industry, district, city, salaryMin, salaryMax, jobType, payUnit } = req.body;
     if (!vendorId || !title || !description || !district) {
       return res.status(400).json({ message: "vendorId, title, description and district are required" });
     }
@@ -307,6 +308,7 @@ export const adminCreateJob = async (req, res, next) => {
       salaryMin,
       salaryMax,
       jobType,
+      payUnit,
     });
 
     dispatchWebhook("job.created", { jobId: job._id, title: job.title, vendorId: job.vendorId });
@@ -485,18 +487,157 @@ export const importVendors = async (req, res, next) => {
   }
 };
 
-// Minimal CSV parser: handles header row + comma-separated values, no quoted-comma support.
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((c) => c.trim());
-    const row = {};
-    headers.forEach((h, i) => (row[h] = cells[i]));
-    return row;
-  });
+const JOB_TYPES = ["full-time", "part-time", "contract", "internship", "hourly", "daily-wage", "on-demand", "freelance"];
+const PAY_UNITS = ["month", "hour", "day", "fixed"];
+
+async function resolveVendorFromRow(row) {
+  if (row.vendorId) {
+    try {
+      const v = await Vendor.findById(row.vendorId);
+      if (v) return v;
+    } catch (e) {
+      /* invalid id */
+    }
+  }
+  if (row.vendorOrgName) {
+    const v = await Vendor.findOne({ orgName: row.vendorOrgName });
+    if (v) return v;
+  }
+  if (row.vendorEmail) {
+    const u = await User.findOne({ email: String(row.vendorEmail).toLowerCase() });
+    if (u) return Vendor.findOne({ userId: u._id });
+  }
+  return null;
 }
+
+export function buildJobDoc(row, vendor) {
+  return {
+    vendorId: vendor._id,
+    vendorSummary: { orgName: vendor.orgName, district: vendor.district, avgRating: vendor.avgRating },
+    title: row.title,
+    description: row.description,
+    category: row.category || "",
+    industry: row.industry || "",
+    location: { district: row.district, city: row.city || "", geo: { type: "Point", coordinates: [0, 0] } },
+    salaryMin: Number(row.salaryMin) || 0,
+    salaryMax: Number(row.salaryMax) || 0,
+    jobType: JOB_TYPES.includes(row.jobType) ? row.jobType : "full-time",
+    payUnit: PAY_UNITS.includes(row.payUnit) ? row.payUnit : "month",
+  };
+}
+
+// POST /api/admin/import/jobs (multipart csv field "file")
+// CSV columns: vendorId|vendorOrgName|vendorEmail,title,description,category,industry,district,city,salaryMin,salaryMax,jobType,payUnit
+export const importJobs = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "CSV file is required" });
+    const rows = parseCsv(req.file.buffer.toString("utf8"));
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const row of rows) {
+      try {
+        if (!row.title || !row.description || !row.district) {
+          results.skipped += 1;
+          continue;
+        }
+        const vendor = await resolveVendorFromRow(row);
+        if (!vendor) {
+          results.skipped += 1;
+          results.errors.push(`No matching vendor for "${row.title}"`);
+          continue;
+        }
+        const job = await Job.create(buildJobDoc(row, vendor));
+        dispatchWebhook("job.created", { jobId: job._id, title: job.title, vendorId: job.vendorId });
+        results.created += 1;
+      } catch (e) {
+        results.errors.push(e.message);
+      }
+    }
+
+    res.json(results);
+  } catch (err) {
+    next(err);
+  }
+};
+
+function sendCsv(res, filename, csv) {
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(csv);
+}
+
+// GET /api/admin/export/users
+export const exportUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select("name email phone role status createdAt").sort({ createdAt: -1 }).lean();
+    const rows = users.map((u) => ({
+      name: u.name,
+      email: u.email,
+      phone: u.phone || "",
+      role: u.role,
+      status: u.status,
+      createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : "",
+    }));
+    sendCsv(res, "users.csv", toCsv(rows, ["name", "email", "phone", "role", "status", "createdAt"]));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/admin/export/vendors
+export const exportVendors = async (req, res, next) => {
+  try {
+    const vendors = await Vendor.find().populate("userId", "name email phone").sort({ createdAt: -1 }).lean();
+    const rows = vendors.map((v) => ({
+      orgName: v.orgName,
+      industry: v.industry || "",
+      district: v.district || "",
+      address: v.address || "",
+      status: v.status,
+      paymentStatus: v.paymentStatus || "",
+      avgRating: v.avgRating ?? "",
+      contactName: v.userId?.name || "",
+      contactEmail: v.userId?.email || "",
+      contactPhone: v.userId?.phone || "",
+      createdAt: v.createdAt ? new Date(v.createdAt).toISOString() : "",
+    }));
+    sendCsv(
+      res,
+      "vendors.csv",
+      toCsv(rows, ["orgName", "industry", "district", "address", "status", "paymentStatus", "avgRating", "contactName", "contactEmail", "contactPhone", "createdAt"])
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/admin/export/jobs
+export const exportJobs = async (req, res, next) => {
+  try {
+    const jobs = await Job.find().sort({ createdAt: -1 }).lean();
+    const rows = jobs.map((j) => ({
+      title: j.title,
+      vendorOrgName: j.vendorSummary?.orgName || "",
+      category: j.category || "",
+      industry: j.industry || "",
+      district: j.location?.district || "",
+      city: j.location?.city || "",
+      salaryMin: j.salaryMin,
+      salaryMax: j.salaryMax,
+      jobType: j.jobType,
+      payUnit: j.payUnit || "month",
+      status: j.status,
+      createdAt: j.createdAt ? new Date(j.createdAt).toISOString() : "",
+    }));
+    sendCsv(
+      res,
+      "jobs.csv",
+      toCsv(rows, ["title", "vendorOrgName", "category", "industry", "district", "city", "salaryMin", "salaryMax", "jobType", "payUnit", "status", "createdAt"])
+    );
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const uploadLogo = async (req, res, next) => {
   try {
