@@ -270,6 +270,317 @@ const run = async () => {
         verificationBadge: false,
       },
     },
+    // --- additional workers ---
+    {
+      name: "Deepak Chauhan",
+      email: "deepak.seeker@jobapp.local",
+      phone: "9876500007",
+      workerProfile: {
+        skillCategory: "household",
+        skills: ["Driver", "Elder Caregiver"],
+        bio: "Experienced driver with valid commercial license, available for local and outstation trips in Gurugram and NCR.",
+        hourlyRate: 200,
+        dailyRate: 1200,
+        payPreference: "daily",
+        location: { district: "Gurugram", city: "DLF Phase 2" },
+        languages: ["Hindi", "English"],
+        experience: "8 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(20)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Kavita Kumari",
+      email: "kavita.seeker@jobapp.local",
+      phone: "9876500008",
+      workerProfile: {
+        skillCategory: "household",
+        skills: ["Nanny", "Babysitter", "Cook"],
+        bio: "Caring and responsible nanny with 6 years of experience looking after infants and toddlers.",
+        hourlyRate: 120,
+        dailyRate: 700,
+        payPreference: "monthly",
+        location: { district: "Faridabad", city: "Sector 29" },
+        languages: ["Hindi"],
+        experience: "6 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(10)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 3);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Vikram Singh",
+      email: "vikram.seeker@jobapp.local",
+      phone: "9876500009",
+      workerProfile: {
+        skillCategory: "construction",
+        skills: ["Mason", "Labourer"],
+        bio: "Experienced mason specialising in brick laying, plastering, and tile work for residential projects.",
+        hourlyRate: 320,
+        dailyRate: 1800,
+        payPreference: "daily",
+        location: { district: "Sonipat", city: "Kundli" },
+        languages: ["Hindi"],
+        experience: "12 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        featured: true,
+        featuredUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        availability: [...Array(15)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Pooja Rani",
+      email: "pooja.seeker@jobapp.local",
+      phone: "9876500010",
+      workerProfile: {
+        skillCategory: "healthcare",
+        skills: ["Physiotherapist", "Caregiver"],
+        bio: "Certified physiotherapist offering home visit sessions for post-surgery rehab and elderly mobility care.",
+        hourlyRate: 600,
+        dailyRate: 3500,
+        payPreference: "hourly",
+        location: { district: "Panchkula", city: "Sector 10" },
+        languages: ["Hindi", "English"],
+        experience: "4 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(8)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 2);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Suresh Patel",
+      email: "suresh.seeker@jobapp.local",
+      phone: "9876500011",
+      workerProfile: {
+        skillCategory: "home-repair",
+        skills: ["Carpenter", "AC Technician"],
+        bio: "Skilled carpenter for custom furniture, door/window repairs, and modular kitchen fitting.",
+        hourlyRate: 380,
+        dailyRate: 2200,
+        payPreference: "daily",
+        location: { district: "Karnal", city: "Sector 12" },
+        languages: ["Hindi"],
+        experience: "10 years",
+        verificationStatus: "pending",
+        verificationBadge: false,
+      },
+    },
+    {
+      name: "Meena Devi",
+      email: "meena.seeker@jobapp.local",
+      phone: "9876500012",
+      workerProfile: {
+        skillCategory: "household",
+        skills: ["Maid", "Cook", "Elder Caregiver"],
+        bio: "Hardworking and trustworthy full-time domestic helper available immediately in Rohtak district.",
+        hourlyRate: 100,
+        dailyRate: 600,
+        payPreference: "monthly",
+        location: { district: "Rohtak", city: "Asthal Bohar" },
+        languages: ["Hindi"],
+        experience: "5 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(25)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Ajay Kumar",
+      email: "ajay.seeker@jobapp.local",
+      phone: "9876500013",
+      workerProfile: {
+        skillCategory: "automotive",
+        skills: ["Car Wash Professional", "Driver"],
+        bio: "Professional car detailing and washing service at your doorstep. Available 7 days a week.",
+        hourlyRate: 150,
+        dailyRate: 900,
+        payPreference: "hourly",
+        location: { district: "Gurugram", city: "Sohna Road" },
+        languages: ["Hindi"],
+        experience: "3 years",
+        verificationStatus: "pending",
+        verificationBadge: false,
+        availability: [...Array(20)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Renu Bala",
+      email: "renu.seeker@jobapp.local",
+      phone: "9876500014",
+      workerProfile: {
+        skillCategory: "healthcare",
+        skills: ["Nurse", "Elder Care"],
+        bio: "Compassionate home nurse with ICU background, specialising in diabetic and cardiac patient care.",
+        hourlyRate: 450,
+        dailyRate: 2800,
+        payPreference: "daily",
+        location: { district: "Ambala", city: "Ambala Cantonment" },
+        languages: ["Hindi", "English"],
+        experience: "7 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(12)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 2);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Harpal Singh",
+      email: "harpal.seeker@jobapp.local",
+      phone: "9876500015",
+      workerProfile: {
+        skillCategory: "construction",
+        skills: ["Welder", "Fabricator"],
+        bio: "Expert welder with experience in MS gates, grills, staircase railings, and structural steel work.",
+        hourlyRate: 400,
+        dailyRate: 2400,
+        payPreference: "daily",
+        location: { district: "Hisar", city: "Hansi Road" },
+        languages: ["Hindi"],
+        experience: "15 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        featured: true,
+        featuredUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        availability: [...Array(18)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Savita Sharma",
+      email: "savita.seeker@jobapp.local",
+      phone: "9876500016",
+      workerProfile: {
+        skillCategory: "household",
+        skills: ["Patient Attendant", "Elder Caregiver"],
+        bio: "Gentle and experienced patient attendant for hospital stays and home recovery. 24-hour availability.",
+        hourlyRate: 130,
+        dailyRate: 750,
+        payPreference: "daily",
+        location: { district: "Panipat", city: "Model Town" },
+        languages: ["Hindi"],
+        experience: "4 years",
+        verificationStatus: "pending",
+        verificationBadge: false,
+        availability: [...Array(15)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Naresh Yadav",
+      email: "naresh.seeker@jobapp.local",
+      phone: "9876500017",
+      workerProfile: {
+        skillCategory: "automotive",
+        skills: ["Mechanic", "EV Technician"],
+        bio: "Two-wheeler and EV specialist with expertise in battery diagnostics, servicing, and roadside assistance.",
+        hourlyRate: 200,
+        dailyRate: 1200,
+        payPreference: "hourly",
+        location: { district: "Faridabad", city: "Ballabhgarh" },
+        languages: ["Hindi"],
+        experience: "6 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(10)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Geeta Verma",
+      email: "geeta.seeker@jobapp.local",
+      phone: "9876500018",
+      workerProfile: {
+        skillCategory: "household",
+        skills: ["Cook"],
+        bio: "Home chef specialising in North Indian, Punjabi, and Haryanvi cuisine. Available for tiffin service and events.",
+        hourlyRate: 180,
+        dailyRate: 1000,
+        payPreference: "monthly",
+        location: { district: "Gurugram", city: "Palam Vihar" },
+        languages: ["Hindi"],
+        experience: "8 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        availability: [...Array(20)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Rajan Thakur",
+      email: "rajan.seeker@jobapp.local",
+      phone: "9876500019",
+      workerProfile: {
+        skillCategory: "construction",
+        skills: ["Site Supervisor", "Mason"],
+        bio: "Civil construction site supervisor with hands-on experience managing teams of 20+ labourers on residential projects.",
+        hourlyRate: 500,
+        dailyRate: 3000,
+        payPreference: "daily",
+        location: { district: "Panchkula", city: "Mansa Devi" },
+        languages: ["Hindi", "English"],
+        experience: "18 years",
+        verificationStatus: "verified",
+        verificationBadge: true,
+        featured: true,
+        featuredUntil: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        availability: [...Array(12)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 2);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
+    {
+      name: "Babita Gill",
+      email: "babita.seeker@jobapp.local",
+      phone: "9876500020",
+      workerProfile: {
+        skillCategory: "home-repair",
+        skills: ["RO Technician", "Plumber"],
+        bio: "Certified RO and water purifier technician offering installation, servicing, and filter replacement.",
+        hourlyRate: 250,
+        dailyRate: 1400,
+        payPreference: "hourly",
+        location: { district: "Karnal", city: "Gharaunda" },
+        languages: ["Hindi"],
+        experience: "5 years",
+        verificationStatus: "pending",
+        verificationBadge: false,
+        availability: [...Array(14)].map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() + i + 1);
+          return d.toISOString().slice(0, 10);
+        }),
+      },
+    },
   ];
 
   for (const s of workerProfiles) {
