@@ -6,6 +6,7 @@ import {
   updateVendorStatus,
   listUsers,
   updateUserStatus,
+  setUserSubscription,
   adminCreateUser,
   adminCreateVendor,
   adminCreateJob,
@@ -65,6 +66,7 @@ router.patch("/vendors/:id/status", updateVendorStatus);
 router.get("/users", listUsers);
 router.post("/users", adminCreateUser);
 router.patch("/users/:id/status", updateUserStatus);
+router.patch("/users/:id/subscription", setUserSubscription);
 router.post("/vendors", adminCreateVendor);
 router.post("/jobs", adminCreateJob);
 

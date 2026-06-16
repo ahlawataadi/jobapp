@@ -69,6 +69,9 @@ export default function Navbar() {
           <Link to="/blog" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             Blog
           </Link>
+          <Link to="/pricing" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+            Pricing
+          </Link>
           <Link to="/about" className="hidden md:inline px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
             About
           </Link>
@@ -143,6 +146,9 @@ export default function Navbar() {
                   </div>
                   <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                     My Profile
+                  </Link>
+                  <Link to="/pricing" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 md:hidden">
+                    Pricing
                   </Link>
                   {user?.role === "seeker" && (
                     <Link to="/worker-profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">

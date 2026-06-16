@@ -55,10 +55,21 @@ const adminConfigSchema = new mongoose.Schema({
     standard: { credits: { type: Number, default: 25  }, price: { type: Number, default: 199 } },
     pro:      { credits: { type: Number, default: 40  }, price: { type: Number, default: 499 } },
   },
+  // Legacy (kept for migration safety — new code uses seekerPlans / vendorPlans)
   subscriptionPlans: {
     basic:      { priceMonthly: { type: Number, default: 999   }, features: { type: String, default: "Up to 10 contact unlocks/month, basic support" } },
     pro:        { priceMonthly: { type: Number, default: 2999  }, features: { type: String, default: "Up to 30 contact unlocks/month, priority support, featured listings" } },
     enterprise: { priceMonthly: { type: Number, default: 9999  }, features: { type: String, default: "Unlimited contact unlocks, dedicated account manager, API access" } },
+  },
+  seekerPlans: {
+    basic:      { priceMonthly: { type: Number, default: 499  }, features: { type: String, default: "10 job applications/day, profile visibility, job alerts" } },
+    pro:        { priceMonthly: { type: Number, default: 999  }, features: { type: String, default: "Unlimited applications, intro video profile, priority listing, resume builder" } },
+    enterprise: { priceMonthly: { type: Number, default: 1999 }, features: { type: String, default: "Everything in Pro, dedicated career counsellor, featured profile, API access" } },
+  },
+  vendorPlans: {
+    basic:      { priceMonthly: { type: Number, default: 999  }, features: { type: String, default: "5 active job posts, basic applicant tracking, email support" } },
+    pro:        { priceMonthly: { type: Number, default: 2999 }, features: { type: String, default: "25 active job posts, priority support, featured listings, intro video" } },
+    enterprise: { priceMonthly: { type: Number, default: 9999 }, features: { type: String, default: "Unlimited job posts, dedicated account manager, API access, bulk import" } },
   },
   featuredWorkerFee: {
     pricePerWeek: { type: Number, default: 99 },
