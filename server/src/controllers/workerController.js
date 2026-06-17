@@ -12,7 +12,7 @@ export const listWorkers = async (req, res, next) => {
 
     const filter = {
       role: "seeker",
-      status: "active",
+      status: { $ne: "suspended" },
       "workerProfile.skillCategory": { $exists: true, $ne: null },
     };
 

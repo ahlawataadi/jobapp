@@ -40,15 +40,6 @@ export default function AdminPanel() {
   const [feeRupees, setFeeRupees] = useState(0);
   const [analyticsScript, setAnalyticsScript] = useState("");
 
-  const emptyPlanSet = () => ({
-    basic:      { priceMonthly: "", features: "", buttonLabel: "" },
-    pro:        { priceMonthly: "", features: "", buttonLabel: "" },
-    enterprise: { priceMonthly: "", features: "", buttonLabel: "" },
-  });
-  const [seekerPlans, setSeekerPlans] = useState(emptyPlanSet);
-  const [vendorPlans, setVendorPlans] = useState(emptyPlanSet);
-  const [planMsg, setPlanMsg] = useState("");
-
   const [vendorSearch, setVendorSearch] = useState("");
   const [vendorStatusFilter, setVendorStatusFilter] = useState("");
   const [vendorSort, setVendorSort] = useState("createdAt");
@@ -121,16 +112,6 @@ export default function AdminPanel() {
       setPaymentRequired(c.paymentRequired);
       setFeeRupees((c.signupFeeAmount / 100).toFixed(2));
       setAnalyticsScript(c.analyticsScript || "");
-      if (c.seekerPlans) setSeekerPlans({
-        basic:      { priceMonthly: c.seekerPlans.basic?.priceMonthly ?? "",      features: c.seekerPlans.basic?.features ?? "",      buttonLabel: c.seekerPlans.basic?.buttonLabel ?? "" },
-        pro:        { priceMonthly: c.seekerPlans.pro?.priceMonthly ?? "",        features: c.seekerPlans.pro?.features ?? "",        buttonLabel: c.seekerPlans.pro?.buttonLabel ?? "" },
-        enterprise: { priceMonthly: c.seekerPlans.enterprise?.priceMonthly ?? "", features: c.seekerPlans.enterprise?.features ?? "", buttonLabel: c.seekerPlans.enterprise?.buttonLabel ?? "" },
-      });
-      if (c.vendorPlans) setVendorPlans({
-        basic:      { priceMonthly: c.vendorPlans.basic?.priceMonthly ?? "",      features: c.vendorPlans.basic?.features ?? "",      buttonLabel: c.vendorPlans.basic?.buttonLabel ?? "" },
-        pro:        { priceMonthly: c.vendorPlans.pro?.priceMonthly ?? "",        features: c.vendorPlans.pro?.features ?? "",        buttonLabel: c.vendorPlans.pro?.buttonLabel ?? "" },
-        enterprise: { priceMonthly: c.vendorPlans.enterprise?.priceMonthly ?? "", features: c.vendorPlans.enterprise?.features ?? "", buttonLabel: c.vendorPlans.enterprise?.buttonLabel ?? "" },
-      });
     }
   }, [configData]);
 
@@ -142,28 +123,6 @@ export default function AdminPanel() {
       analyticsScript,
     });
   };
-
-  const handleSavePlans = async (e) => {
-    e.preventDefault();
-    setPlanMsg("");
-    const toNum = (v) => Number(v) || 0;
-    await updateConfig({
-      seekerPlans: {
-        basic:      { priceMonthly: toNum(seekerPlans.basic.priceMonthly),      features: seekerPlans.basic.features,      buttonLabel: seekerPlans.basic.buttonLabel },
-        pro:        { priceMonthly: toNum(seekerPlans.pro.priceMonthly),        features: seekerPlans.pro.features,        buttonLabel: seekerPlans.pro.buttonLabel },
-        enterprise: { priceMonthly: toNum(seekerPlans.enterprise.priceMonthly), features: seekerPlans.enterprise.features, buttonLabel: seekerPlans.enterprise.buttonLabel },
-      },
-      vendorPlans: {
-        basic:      { priceMonthly: toNum(vendorPlans.basic.priceMonthly),      features: vendorPlans.basic.features,      buttonLabel: vendorPlans.basic.buttonLabel },
-        pro:        { priceMonthly: toNum(vendorPlans.pro.priceMonthly),        features: vendorPlans.pro.features,        buttonLabel: vendorPlans.pro.buttonLabel },
-        enterprise: { priceMonthly: toNum(vendorPlans.enterprise.priceMonthly), features: vendorPlans.enterprise.features, buttonLabel: vendorPlans.enterprise.buttonLabel },
-      },
-    });
-    setPlanMsg("Subscription plans saved.");
-  };
-
-  const setPlan = (setter, tier, field, value) =>
-    setter((prev) => ({ ...prev, [tier]: { ...prev[tier], [field]: value } }));
 
   return (
     <>
@@ -207,70 +166,6 @@ export default function AdminPanel() {
             className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
           >
             Save
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
-        <h2 className="font-bold text-gray-900 mb-1">Subscription Plans</h2>
-        <p className="text-xs text-gray-500 mb-4">
-          Set prices and feature lists for seeker and vendor plans. Features are comma-separated.
-          These appear on the public <a href="/pricing" target="_blank" className="text-primary-600 underline">/pricing</a> page.
-        </p>
-        <form onSubmit={handleSavePlans} className="space-y-6 text-sm">
-          {planMsg && <p className="text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">{planMsg}</p>}
-
-          {[
-            { label: "Job Seeker Plans", state: seekerPlans, setter: setSeekerPlans },
-            { label: "Employer / Vendor Plans", state: vendorPlans, setter: setVendorPlans },
-          ].map(({ label, state, setter }) => (
-            <div key={label}>
-              <h3 className="font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-100">{label}</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                {["basic", "pro", "enterprise"].map((tier) => (
-                  <div key={tier} className="space-y-2 bg-gray-50 rounded-xl p-4">
-                    <p className="font-semibold capitalize text-gray-700">{tier}</p>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">Price / month (₹)</label>
-                      <input
-                        type="number"
-                        className={`${inputCls} w-full`}
-                        value={state[tier].priceMonthly}
-                        onChange={(e) => setPlan(setter, tier, "priceMonthly", e.target.value)}
-                        placeholder="e.g. 999"
-                        min={0}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">Features (comma-separated)</label>
-                      <textarea
-                        className={`${inputCls} w-full text-xs`}
-                        rows={3}
-                        value={state[tier].features}
-                        onChange={(e) => setPlan(setter, tier, "features", e.target.value)}
-                        placeholder="Feature one, Feature two, Feature three"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">Button label (leave blank for default)</label>
-                      <input
-                        className={`${inputCls} w-full`}
-                        value={state[tier].buttonLabel}
-                        onChange={(e) => setPlan(setter, tier, "buttonLabel", e.target.value)}
-                        placeholder='e.g. "Free" or "Get started"'
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <button
-            disabled={savingConfig}
-            className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
-          >
-            {savingConfig ? "Saving..." : "Save plans"}
           </button>
         </form>
       </div>
