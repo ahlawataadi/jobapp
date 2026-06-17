@@ -275,12 +275,10 @@ export const seedSampleBlogs = async (req, res, next) => {
   try {
     let created = 0;
     for (const b of SAMPLE_BLOGS) {
-      const exists = await Blog.findOne({ slug: b.slug });
-      if (!exists) {
-        await Blog.create({ ...b, authorId: req.user?._id, authorName: req.user?.name || "Admin" });
-        created++;
-      }
+      const slug = await uniqueSlug(b.slug);
+      await Blog.create({ ...b, slug, authorId: req.user?._id, authorName: req.user?.name || "Admin" });
+      created++;
     }
-    res.json({ created, message: created > 0 ? `${created} sample blog posts added.` : "All sample posts already exist." });
+    res.json({ created, message: `${created} sample blog posts added.` });
   } catch (err) { next(err); }
 };

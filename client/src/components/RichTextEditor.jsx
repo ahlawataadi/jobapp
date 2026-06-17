@@ -3,7 +3,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
-import { useEffect, useCallback } from "react";
+import Image from "@tiptap/extension-image";
+import { useEffect, useCallback, useRef } from "react";
 
 const ToolBtn = ({ active, onClick, title, children, disabled }) => (
   <button
@@ -23,13 +24,15 @@ const ToolBtn = ({ active, onClick, title, children, disabled }) => (
 
 const Divider = () => <span className="w-px h-5 bg-gray-300 mx-0.5 self-center" />;
 
-export default function RichTextEditor({ value, onChange, minHeight = 200 }) {
+export default function RichTextEditor({ value, onChange, minHeight = 200, uploadImageFn }) {
+  const imgInputRef = useRef(null);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, autolink: true }),
+      Image.configure({ inline: false, allowBase64: true }),
     ],
     content: value || "",
     onUpdate({ editor: e }) {
@@ -44,6 +47,26 @@ export default function RichTextEditor({ value, onChange, minHeight = 200 }) {
       editor.commands.setContent(value || "", false);
     }
   }, [value]);
+
+  const insertImageUrl = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt("Image URL");
+    if (url) editor.chain().focus().setImage({ src: url }).run();
+  }, [editor]);
+
+  const handleImageFile = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+    if (uploadImageFn) {
+      const url = await uploadImageFn(file);
+      if (url) editor.chain().focus().setImage({ src: url }).run();
+    } else {
+      const reader = new FileReader();
+      reader.onload = (ev) => editor.chain().focus().setImage({ src: ev.target.result }).run();
+      reader.readAsDataURL(file);
+    }
+    e.target.value = "";
+  }, [editor, uploadImageFn]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -104,6 +127,18 @@ export default function RichTextEditor({ value, onChange, minHeight = 200 }) {
         )}
         <Divider />
 
+        {/* Image */}
+        <ToolBtn title="Insert image by URL" onClick={insertImageUrl}>🖼</ToolBtn>
+        <label
+          title="Upload image from file"
+          onMouseDown={(e) => e.preventDefault()}
+          className="px-2 py-1 rounded text-sm font-medium border transition-colors bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700 cursor-pointer select-none"
+        >
+          📷
+          <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+        </label>
+        <Divider />
+
         {/* Clear */}
         <ToolBtn title="Clear formatting" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}>✕</ToolBtn>
       </div>
@@ -126,6 +161,8 @@ export default function RichTextEditor({ value, onChange, minHeight = 200 }) {
           [&_.ProseMirror_pre]:bg-gray-900 [&_.ProseMirror_pre]:text-gray-100 [&_.ProseMirror_pre]:p-4 [&_.ProseMirror_pre]:rounded-lg [&_.ProseMirror_pre]:my-3 [&_.ProseMirror_pre]:overflow-x-auto
           [&_.ProseMirror_a]:text-primary-600 [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:cursor-pointer
           [&_.ProseMirror_hr]:border-gray-300 [&_.ProseMirror_hr]:my-4
+          [&_.ProseMirror_img]:max-w-full [&_.ProseMirror_img]:rounded-lg [&_.ProseMirror_img]:my-3 [&_.ProseMirror_img]:cursor-pointer
+          [&_.ProseMirror_img.ProseMirror-selectednode]:ring-2 [&_.ProseMirror_img.ProseMirror-selectednode]:ring-primary-400
           [&_.ProseMirror_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child]:before:text-gray-400 [&_.ProseMirror_p.is-editor-empty:first-child]:before:float-left [&_.ProseMirror_p.is-editor-empty:first-child]:before:pointer-events-none
         `}
       />

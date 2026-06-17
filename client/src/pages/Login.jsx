@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { api } from "../api/axios.js";
 import { setCredentials } from "../store/authSlice.js";
 
@@ -13,6 +13,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +23,7 @@ export default function Login() {
     try {
       const { data } = await api.post("/auth/login", form);
       dispatch(setCredentials(data));
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       if (err?.response?.data?.requiresVerification) {
         const { userId, channel, devOtp } = err.response.data;

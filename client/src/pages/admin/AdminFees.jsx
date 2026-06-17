@@ -10,10 +10,15 @@ const DEFAULT_PACKS = {
   pro:      { credits: 40,  price: 499 },
 };
 
-const DEFAULT_PLANS = {
-  basic:      { priceMonthly: 999,   features: "Up to 10 contact unlocks/month, basic support" },
-  pro:        { priceMonthly: 2999,  features: "Up to 30 contact unlocks/month, priority support, featured listings" },
-  enterprise: { priceMonthly: 9999,  features: "Unlimited contact unlocks, dedicated account manager, API access" },
+const DEFAULT_SEEKER_PLANS = {
+  basic:      { priceMonthly: 499,  features: "10 job applications/day, profile visibility, job alerts", buttonLabel: "" },
+  pro:        { priceMonthly: 999,  features: "Unlimited applications, intro video profile, priority listing, resume builder", buttonLabel: "" },
+  enterprise: { priceMonthly: 1999, features: "Everything in Pro, dedicated career counsellor, featured profile, API access", buttonLabel: "" },
+};
+const DEFAULT_VENDOR_PLANS = {
+  basic:      { priceMonthly: 999,  features: "5 active job posts, basic applicant tracking, email support", buttonLabel: "" },
+  pro:        { priceMonthly: 2999, features: "25 active job posts, priority support, featured listings, intro video", buttonLabel: "" },
+  enterprise: { priceMonthly: 9999, features: "Unlimited job posts, dedicated account manager, API access, bulk import", buttonLabel: "" },
 };
 
 const DEFAULT_FEATURED = { pricePerWeek: 99 };
@@ -44,7 +49,8 @@ export default function AdminFees() {
 
   const [signupFee, setSignupFee] = useState({ required: false, amount: 0 });
   const [packs, setPacks] = useState(DEFAULT_PACKS);
-  const [plans, setPlans] = useState(DEFAULT_PLANS);
+  const [seekerPlans, setSeekerPlans] = useState(DEFAULT_SEEKER_PLANS);
+  const [vendorPlans, setVendorPlans] = useState(DEFAULT_VENDOR_PLANS);
   const [featured, setFeatured] = useState(DEFAULT_FEATURED);
 
   useEffect(() => {
@@ -63,11 +69,18 @@ export default function AdminFees() {
         pro:      { ...DEFAULT_PACKS.pro,       ...cfg.contactPacks.pro      },
       });
     }
-    if (cfg.subscriptionPlans) {
-      setPlans({
-        basic:      { ...DEFAULT_PLANS.basic,      ...cfg.subscriptionPlans.basic      },
-        pro:        { ...DEFAULT_PLANS.pro,         ...cfg.subscriptionPlans.pro        },
-        enterprise: { ...DEFAULT_PLANS.enterprise, ...cfg.subscriptionPlans.enterprise },
+    if (cfg.seekerPlans) {
+      setSeekerPlans({
+        basic:      { ...DEFAULT_SEEKER_PLANS.basic,      ...cfg.seekerPlans.basic      },
+        pro:        { ...DEFAULT_SEEKER_PLANS.pro,         ...cfg.seekerPlans.pro        },
+        enterprise: { ...DEFAULT_SEEKER_PLANS.enterprise, ...cfg.seekerPlans.enterprise },
+      });
+    }
+    if (cfg.vendorPlans) {
+      setVendorPlans({
+        basic:      { ...DEFAULT_VENDOR_PLANS.basic,      ...cfg.vendorPlans.basic      },
+        pro:        { ...DEFAULT_VENDOR_PLANS.pro,         ...cfg.vendorPlans.pro        },
+        enterprise: { ...DEFAULT_VENDOR_PLANS.enterprise, ...cfg.vendorPlans.enterprise },
       });
     }
     if (cfg.featuredWorkerFee) {
@@ -100,7 +113,7 @@ export default function AdminFees() {
 
   const savePlans = async () => {
     try {
-      await updateConfig({ subscriptionPlans: plans }).unwrap();
+      await updateConfig({ seekerPlans, vendorPlans }).unwrap();
       notify("Subscription plans saved.");
     } catch {
       notify("Failed to save.");
@@ -119,8 +132,11 @@ export default function AdminFees() {
   const setPackField = (tier, field, value) =>
     setPacks((p) => ({ ...p, [tier]: { ...p[tier], [field]: value } }));
 
-  const setPlanField = (tier, field, value) =>
-    setPlans((p) => ({ ...p, [tier]: { ...p[tier], [field]: value } }));
+  const setSeekerField = (tier, field, value) =>
+    setSeekerPlans((p) => ({ ...p, [tier]: { ...p[tier], [field]: value } }));
+
+  const setVendorField = (tier, field, value) =>
+    setVendorPlans((p) => ({ ...p, [tier]: { ...p[tier], [field]: value } }));
 
   if (isLoading) return <div className="skeleton h-64 rounded-xl" />;
 
@@ -226,10 +242,10 @@ export default function AdminFees() {
         </div>
       </Section>
 
-      {/* Subscription Plans */}
+      {/* Job Seeker Plans */}
       <Section
-        title="Subscription Plans"
-        description="Monthly plans for vendors. Features text is shown to vendors on the pricing page."
+        title="Job Seeker Plans"
+        description="Monthly plans for job seekers. Shown on the /pricing page. Button label overrides the default 'Get started' text."
         onSave={savePlans}
         saving={saving}
       >
@@ -240,31 +256,71 @@ export default function AdminFees() {
             { key: "enterprise", label: "Enterprise",  badge: "bg-accent-50 text-accent-700" },
           ].map(({ key, label, badge }) => (
             <div key={key} className="border border-gray-200 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge}`}>{label}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge}`}>{label}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                 <div>
-                  <label className="block text-gray-600 mb-1">Monthly price (₹/month)</label>
+                  <label className="block text-gray-600 mb-1">Price / month (₹)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-2 text-gray-400">₹</span>
-                    <input
-                      type="number"
-                      min="0"
-                      className={inputCls + " pl-7"}
-                      value={plans[key].priceMonthly}
-                      onChange={(e) => setPlanField(key, "priceMonthly", Number(e.target.value))}
-                    />
+                    <input type="number" min="0" className={inputCls + " pl-7"}
+                      value={seekerPlans[key].priceMonthly}
+                      onChange={(e) => setSeekerField(key, "priceMonthly", Number(e.target.value))} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-gray-600 mb-1">Features description</label>
-                  <input
-                    type="text"
-                    className={inputCls}
-                    value={plans[key].features}
-                    onChange={(e) => setPlanField(key, "features", e.target.value)}
-                  />
+                  <label className="block text-gray-600 mb-1">Features (comma-separated)</label>
+                  <input type="text" className={inputCls}
+                    value={seekerPlans[key].features}
+                    onChange={(e) => setSeekerField(key, "features", e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-gray-600 mb-1">Button label (optional)</label>
+                  <input type="text" className={inputCls} placeholder='e.g. "Free" or "Start now"'
+                    value={seekerPlans[key].buttonLabel}
+                    onChange={(e) => setSeekerField(key, "buttonLabel", e.target.value)} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Employer/Vendor Plans */}
+      <Section
+        title="Employer / Vendor Plans"
+        description="Monthly plans for employers. Shown on the /pricing page. Button label overrides the default 'Get started' text."
+        onSave={savePlans}
+        saving={saving}
+      >
+        <div className="space-y-4">
+          {[
+            { key: "basic",      label: "Basic",      badge: "bg-gray-100 text-gray-700" },
+            { key: "pro",        label: "Pro",         badge: "bg-primary-50 text-primary-700" },
+            { key: "enterprise", label: "Enterprise",  badge: "bg-accent-50 text-accent-700" },
+          ].map(({ key, label, badge }) => (
+            <div key={key} className="border border-gray-200 rounded-lg p-4 space-y-3">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge}`}>{label}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <label className="block text-gray-600 mb-1">Price / month (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-400">₹</span>
+                    <input type="number" min="0" className={inputCls + " pl-7"}
+                      value={vendorPlans[key].priceMonthly}
+                      onChange={(e) => setVendorField(key, "priceMonthly", Number(e.target.value))} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-gray-600 mb-1">Features (comma-separated)</label>
+                  <input type="text" className={inputCls}
+                    value={vendorPlans[key].features}
+                    onChange={(e) => setVendorField(key, "features", e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-gray-600 mb-1">Button label (optional)</label>
+                  <input type="text" className={inputCls} placeholder='e.g. "Free trial" or "Contact us"'
+                    value={vendorPlans[key].buttonLabel}
+                    onChange={(e) => setVendorField(key, "buttonLabel", e.target.value)} />
                 </div>
               </div>
             </div>
