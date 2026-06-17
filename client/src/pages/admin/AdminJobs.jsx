@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   useListAdminVendorsQuery,
   useAdminCreateJobMutation,
@@ -162,7 +163,8 @@ export default function AdminJobs() {
                 <th className="py-2 pr-3">Vendor</th>
                 <th className="py-2 pr-3">Type</th>
                 <th className="py-2 pr-3">Pay</th>
-                <th className="py-2">District</th>
+                <th className="py-2 pr-3">District</th>
+                <th className="py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -172,12 +174,15 @@ export default function AdminJobs() {
                   <td className="py-2 pr-3 text-gray-600">{j.vendorSummary?.orgName}</td>
                   <td className="py-2 pr-3">{jobTypeLabel(j.jobType)}</td>
                   <td className="py-2 pr-3">{formatPay(j)}</td>
-                  <td className="py-2 text-gray-600">{j.location?.district}</td>
+                  <td className="py-2 pr-3 text-gray-600">{j.location?.district}</td>
+                  <td className="py-2">
+                    <Link to={`/jobs/${j._id}`} className="text-xs text-primary-600 hover:text-primary-800 font-medium">View</Link>
+                  </td>
                 </tr>
               ))}
               {(!jobsData?.items || jobsData.items.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-gray-400 text-center">
+                  <td colSpan={6} className="py-4 text-gray-400 text-center">
                     No jobs yet.
                   </td>
                 </tr>

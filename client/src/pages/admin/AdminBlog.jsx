@@ -7,6 +7,7 @@ import {
   useUpdateBlogMutation,
   useDeleteBlogMutation,
   useImportBlogsMutation,
+  useSeedSampleBlogsMutation,
 } from "../../store/jobsApi.js";
 
 const BLOG_CATEGORIES = [
@@ -44,11 +45,13 @@ export default function AdminBlog() {
   const [updateBlog, { isLoading: updating }] = useUpdateBlogMutation();
   const [deleteBlog] = useDeleteBlogMutation();
   const [importBlogs, { isLoading: importing }] = useImportBlogsMutation();
+  const [seedBlogs, { isLoading: seeding }] = useSeedSampleBlogsMutation();
   const [form, setForm] = useState(EMPTY);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [importMsg, setImportMsg] = useState("");
   const [importErr, setImportErr] = useState("");
+  const [seedMsg, setSeedMsg] = useState("");
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -116,6 +119,17 @@ export default function AdminBlog() {
       refetch();
     } catch (e2) {
       setErr(e2?.data?.message || "Delete failed");
+    }
+  };
+
+  const handleSeed = async () => {
+    setSeedMsg("");
+    try {
+      const res = await seedBlogs().unwrap();
+      setSeedMsg(res.message);
+      refetch();
+    } catch (e2) {
+      setSeedMsg(e2?.data?.message || "Seed failed");
     }
   };
 
@@ -224,6 +238,22 @@ export default function AdminBlog() {
             )}
           </div>
         </form>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
+        <h2 className="font-bold text-gray-900 mb-2">Sample posts</h2>
+        <p className="text-xs text-gray-500 mb-3">
+          Add 5 ready-made sample blog posts (career tips, worker guides, employer guides). Already-existing slugs are skipped.
+        </p>
+        {seedMsg && <p className="text-green-700 text-sm bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-3">{seedMsg}</p>}
+        <button
+          type="button"
+          onClick={handleSeed}
+          disabled={seeding}
+          className="bg-gray-700 hover:bg-gray-800 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          {seeding ? "Seeding…" : "Seed sample posts"}
+        </button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
