@@ -404,6 +404,18 @@ export const jobsApi = createApi({
       query: ({ id, ...body }) => ({ url: `/admin/users/${id}/subscription`, method: "PATCH", body }),
       invalidatesTags: ["User"],
     }),
+    seedSampleBlogs: builder.mutation({
+      query: () => ({ url: "/admin/blog/seed", method: "POST" }),
+      invalidatesTags: ["Blog"],
+    }),
+    uploadAboutImage: builder.mutation({
+      query: (formData) => ({ url: "/admin/branding/about-image", method: "POST", body: formData }),
+      invalidatesTags: ["AdminConfig"],
+    }),
+    uploadContactImage: builder.mutation({
+      query: (formData) => ({ url: "/admin/branding/contact-image", method: "POST", body: formData }),
+      invalidatesTags: ["AdminConfig"],
+    }),
   }),
 });
 
@@ -501,4 +513,7 @@ export const {
   useRemoveVendorVideoMutation,
   useAddVendorBusinessMutation,
   useRemoveVendorBusinessMutation,
+  useSeedSampleBlogsMutation,
+  useUploadAboutImageMutation,
+  useUploadContactImageMutation,
 } = jobsApi;

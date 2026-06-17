@@ -23,6 +23,8 @@ import {
   getIntegrationSettings,
   updateIntegrationSettings,
   uploadLogo,
+  uploadAboutImage,
+  uploadContactImage,
   listActivityLogs,
 } from "../controllers/adminController.js";
 import {
@@ -33,6 +35,7 @@ import {
   deleteBlog,
   generateBlogNow,
   importBlogs,
+  seedSampleBlogs,
 } from "../controllers/blogController.js";
 import logoUpload from "../middleware/logoUpload.js";
 import broadcastUpload from "../middleware/broadcastUpload.js";
@@ -87,6 +90,7 @@ router.get("/blog", listAdminBlogs);
 router.post("/blog", createBlog);
 router.post("/blog/generate", generateBlogNow);
 router.post("/blog/import", csvUpload.single("file"), importBlogs);
+router.post("/blog/seed", seedSampleBlogs);
 router.get("/blog/:id", getAdminBlog);
 router.patch("/blog/:id", updateBlog);
 router.delete("/blog/:id", deleteBlog);
@@ -96,6 +100,8 @@ router.get("/etl/status", listEtlRuns);
 router.get("/analytics", getAnalytics);
 router.get("/activity-logs", listActivityLogs);
 router.post("/branding/logo", logoUpload.single("logo"), uploadLogo);
+router.post("/branding/about-image", logoUpload.single("image"), uploadAboutImage);
+router.post("/branding/contact-image", logoUpload.single("image"), uploadContactImage);
 
 router.get("/settings/integrations", getIntegrationSettings);
 router.put("/settings/integrations", updateIntegrationSettings);

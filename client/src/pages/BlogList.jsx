@@ -7,7 +7,7 @@ const btn =
 
 export default function BlogList() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useListBlogsQuery({ page, limit: 9 });
+  const { data, isLoading } = useListBlogsQuery({ page, limit: 5 });
   const posts = data?.items || [];
   const pages = data?.pages || 1;
 

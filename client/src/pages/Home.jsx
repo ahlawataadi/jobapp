@@ -5,6 +5,7 @@ import {
   useSuggestJobsQuery,
   useFeaturedVendorsQuery,
   useActiveBannerQuery,
+  useListBlogsQuery,
 } from "../store/jobsApi.js";
 import DistrictMap from "../components/DistrictMap.jsx";
 import JobCard from "../components/JobCard.jsx";
@@ -209,56 +210,42 @@ function QuickFilters() {
   );
 }
 
-const ARTICLES = [
-  {
-    title: "5 in-demand jobs in Haryana's diagnostics sector right now",
-    excerpt:
-      "From phlebotomists to radiology technicians, diagnostic labs across Gurugram and Faridabad are hiring at scale. Here's what employers are looking for.",
-    category: "Industry Insights",
-    date: "2026-06-08",
-    readMins: 4,
-  },
-  {
-    title: "How to write a resume that gets shortlisted faster",
-    excerpt:
-      "Recruiters spend seconds on each resume. Learn the formatting and keyword tricks that help your application stand out in Haryana's competitive job market.",
-    category: "Career Tips",
-    date: "2026-06-05",
-    readMins: 6,
-  },
-  {
-    title: "Minimum wage & labour law updates for Haryana employers",
-    excerpt:
-      "A quick rundown of recent changes to state labour regulations that every vendor posting jobs on our platform should be aware of.",
-    category: "Compliance",
-    date: "2026-06-01",
-    readMins: 5,
-  },
-];
-
 function BlogSection() {
+  const { data, isLoading } = useListBlogsQuery({ limit: 3, page: 1 });
+  const posts = data?.items || [];
+
+  if (isLoading) return null;
+  if (posts.length === 0) return null;
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-bold text-gray-900">Career advice &amp; news</h2>
-        <span className="text-sm text-primary-700 font-medium">More articles soon</span>
+        <Link to="/blog" className="text-sm text-primary-700 font-medium hover:text-primary-900">
+          View all articles
+        </Link>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
-        {ARTICLES.map((a) => (
-          <article
-            key={a.title}
+        {posts.map((p) => (
+          <Link
+            key={p._id}
+            to={`/blog/${p.slug}`}
             className="bg-white border border-gray-200 rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow flex flex-col"
           >
-            <span className="inline-block self-start text-xs font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full mb-3">
-              {a.category}
-            </span>
-            <h3 className="font-bold text-gray-900 leading-snug mb-2">{a.title}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2 flex-1">{a.excerpt}</p>
-            <div className="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
-              <span>{new Date(a.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-              <span>{a.readMins} min read</span>
-            </div>
-          </article>
+            {p.coverImage && (
+              <img src={p.coverImage} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
+            )}
+            {p.category && (
+              <span className="inline-block self-start text-xs font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full mb-3">
+                {p.category}
+              </span>
+            )}
+            <h3 className="font-bold text-gray-900 leading-snug mb-2 line-clamp-2">{p.title}</h3>
+            {p.excerpt && <p className="text-sm text-gray-600 line-clamp-2 flex-1">{p.excerpt}</p>}
+            <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
+              {p.publishedAt ? new Date(p.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : ""}
+            </p>
+          </Link>
         ))}
       </div>
     </section>

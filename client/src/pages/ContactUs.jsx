@@ -6,7 +6,10 @@ const inputCls =
 
 export default function ContactUs() {
   const { data } = useGetAdminConfigQuery();
-  const contact = data?.config?.contact || {};
+  const config = data?.config;
+  const contact = config?.contact || {};
+  const message = contact.message || "Have a question or need help? Reach out and our team will get back to you.";
+  const isHtml = message.trimStart().startsWith("<");
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
 
@@ -17,11 +20,23 @@ export default function ContactUs() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
+      {config?.contactImage && (
+        <img
+          src={config.contactImage}
+          alt="Contact Us"
+          className="w-full max-h-48 object-cover rounded-2xl shadow-card"
+        />
+      )}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Contact Us</h1>
-        <p className="text-gray-500 mt-1">
-          {contact.message || "Have a question or need help? Reach out and our team will get back to you."}
-        </p>
+        {isHtml ? (
+          <div
+            className="prose prose-gray prose-sm max-w-none mt-2 text-gray-500"
+            dangerouslySetInnerHTML={{ __html: message }}
+          />
+        ) : (
+          <p className="text-gray-500 mt-1">{message}</p>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-1 text-sm text-gray-600">

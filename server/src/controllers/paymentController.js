@@ -114,8 +114,20 @@ export const createSubscriptionOrder = async (req, res, next) => {
     const config = await getConfig();
     const planKey = req.user.role === "vendor" ? "vendorPlans" : "seekerPlans";
     const planConfig = config[planKey]?.[plan] ?? config.subscriptionPlans?.[plan];
-    if (!planConfig?.priceMonthly) {
+    if (planConfig === undefined || planConfig === null) {
       return res.status(400).json({ message: "Subscription plan not configured" });
+    }
+
+    // Free plan — activate immediately without Razorpay
+    if ((planConfig.priceMonthly ?? 0) === 0) {
+      const User = (await import("../models/User.js")).default;
+      const user = await User.findById(req.user._id);
+      user.subscription.plan = plan;
+      const exp = new Date(); exp.setDate(exp.getDate() + 30);
+      user.subscription.expiresAt = exp;
+      await user.save();
+      await Payment.create({ type: "subscription", userId: req.user._id, subscriptionPlan: plan, razorpayOrderId: `free_${Date.now()}`, amount: 0, status: "paid" });
+      return res.json({ free: true, plan });
     }
 
     const amountPaise = Math.round(planConfig.priceMonthly * 100);

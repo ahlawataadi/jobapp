@@ -41,9 +41,9 @@ export default function AdminPanel() {
   const [analyticsScript, setAnalyticsScript] = useState("");
 
   const emptyPlanSet = () => ({
-    basic:      { priceMonthly: "", features: "" },
-    pro:        { priceMonthly: "", features: "" },
-    enterprise: { priceMonthly: "", features: "" },
+    basic:      { priceMonthly: "", features: "", buttonLabel: "" },
+    pro:        { priceMonthly: "", features: "", buttonLabel: "" },
+    enterprise: { priceMonthly: "", features: "", buttonLabel: "" },
   });
   const [seekerPlans, setSeekerPlans] = useState(emptyPlanSet);
   const [vendorPlans, setVendorPlans] = useState(emptyPlanSet);
@@ -122,14 +122,14 @@ export default function AdminPanel() {
       setFeeRupees((c.signupFeeAmount / 100).toFixed(2));
       setAnalyticsScript(c.analyticsScript || "");
       if (c.seekerPlans) setSeekerPlans({
-        basic:      { priceMonthly: c.seekerPlans.basic?.priceMonthly ?? "",      features: c.seekerPlans.basic?.features ?? "" },
-        pro:        { priceMonthly: c.seekerPlans.pro?.priceMonthly ?? "",        features: c.seekerPlans.pro?.features ?? "" },
-        enterprise: { priceMonthly: c.seekerPlans.enterprise?.priceMonthly ?? "", features: c.seekerPlans.enterprise?.features ?? "" },
+        basic:      { priceMonthly: c.seekerPlans.basic?.priceMonthly ?? "",      features: c.seekerPlans.basic?.features ?? "",      buttonLabel: c.seekerPlans.basic?.buttonLabel ?? "" },
+        pro:        { priceMonthly: c.seekerPlans.pro?.priceMonthly ?? "",        features: c.seekerPlans.pro?.features ?? "",        buttonLabel: c.seekerPlans.pro?.buttonLabel ?? "" },
+        enterprise: { priceMonthly: c.seekerPlans.enterprise?.priceMonthly ?? "", features: c.seekerPlans.enterprise?.features ?? "", buttonLabel: c.seekerPlans.enterprise?.buttonLabel ?? "" },
       });
       if (c.vendorPlans) setVendorPlans({
-        basic:      { priceMonthly: c.vendorPlans.basic?.priceMonthly ?? "",      features: c.vendorPlans.basic?.features ?? "" },
-        pro:        { priceMonthly: c.vendorPlans.pro?.priceMonthly ?? "",        features: c.vendorPlans.pro?.features ?? "" },
-        enterprise: { priceMonthly: c.vendorPlans.enterprise?.priceMonthly ?? "", features: c.vendorPlans.enterprise?.features ?? "" },
+        basic:      { priceMonthly: c.vendorPlans.basic?.priceMonthly ?? "",      features: c.vendorPlans.basic?.features ?? "",      buttonLabel: c.vendorPlans.basic?.buttonLabel ?? "" },
+        pro:        { priceMonthly: c.vendorPlans.pro?.priceMonthly ?? "",        features: c.vendorPlans.pro?.features ?? "",        buttonLabel: c.vendorPlans.pro?.buttonLabel ?? "" },
+        enterprise: { priceMonthly: c.vendorPlans.enterprise?.priceMonthly ?? "", features: c.vendorPlans.enterprise?.features ?? "", buttonLabel: c.vendorPlans.enterprise?.buttonLabel ?? "" },
       });
     }
   }, [configData]);
@@ -149,14 +149,14 @@ export default function AdminPanel() {
     const toNum = (v) => Number(v) || 0;
     await updateConfig({
       seekerPlans: {
-        basic:      { priceMonthly: toNum(seekerPlans.basic.priceMonthly),      features: seekerPlans.basic.features },
-        pro:        { priceMonthly: toNum(seekerPlans.pro.priceMonthly),        features: seekerPlans.pro.features },
-        enterprise: { priceMonthly: toNum(seekerPlans.enterprise.priceMonthly), features: seekerPlans.enterprise.features },
+        basic:      { priceMonthly: toNum(seekerPlans.basic.priceMonthly),      features: seekerPlans.basic.features,      buttonLabel: seekerPlans.basic.buttonLabel },
+        pro:        { priceMonthly: toNum(seekerPlans.pro.priceMonthly),        features: seekerPlans.pro.features,        buttonLabel: seekerPlans.pro.buttonLabel },
+        enterprise: { priceMonthly: toNum(seekerPlans.enterprise.priceMonthly), features: seekerPlans.enterprise.features, buttonLabel: seekerPlans.enterprise.buttonLabel },
       },
       vendorPlans: {
-        basic:      { priceMonthly: toNum(vendorPlans.basic.priceMonthly),      features: vendorPlans.basic.features },
-        pro:        { priceMonthly: toNum(vendorPlans.pro.priceMonthly),        features: vendorPlans.pro.features },
-        enterprise: { priceMonthly: toNum(vendorPlans.enterprise.priceMonthly), features: vendorPlans.enterprise.features },
+        basic:      { priceMonthly: toNum(vendorPlans.basic.priceMonthly),      features: vendorPlans.basic.features,      buttonLabel: vendorPlans.basic.buttonLabel },
+        pro:        { priceMonthly: toNum(vendorPlans.pro.priceMonthly),        features: vendorPlans.pro.features,        buttonLabel: vendorPlans.pro.buttonLabel },
+        enterprise: { priceMonthly: toNum(vendorPlans.enterprise.priceMonthly), features: vendorPlans.enterprise.features, buttonLabel: vendorPlans.enterprise.buttonLabel },
       },
     });
     setPlanMsg("Subscription plans saved.");
@@ -249,6 +249,15 @@ export default function AdminPanel() {
                         value={state[tier].features}
                         onChange={(e) => setPlan(setter, tier, "features", e.target.value)}
                         placeholder="Feature one, Feature two, Feature three"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Button label (leave blank for default)</label>
+                      <input
+                        className={`${inputCls} w-full`}
+                        value={state[tier].buttonLabel}
+                        onChange={(e) => setPlan(setter, tier, "buttonLabel", e.target.value)}
+                        placeholder='e.g. "Free" or "Get started"'
                       />
                     </div>
                   </div>
@@ -401,6 +410,9 @@ export default function AdminPanel() {
                   <div className="flex items-center gap-2 flex-wrap">
                     {u.role === "seeker" && (
                       <Link to={`/workers/${u._id}`} className="text-xs text-primary-600 hover:text-primary-800 font-medium">View</Link>
+                    )}
+                    {u.role === "vendor" && u.vendorId && (
+                      <Link to={`/vendors/${u.vendorId}`} className="text-xs text-primary-600 hover:text-primary-800 font-medium">View</Link>
                     )}
                     {u.role === "admin" ? (
                       <span className="text-xs text-gray-400">—</span>

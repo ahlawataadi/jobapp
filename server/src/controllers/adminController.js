@@ -35,15 +35,17 @@ export const getAdminConfig = async (req, res, next) => {
         contactPacks: config.contactPacks,
         subscriptionPlans: config.subscriptionPlans,
         seekerPlans: config.seekerPlans ?? {
-          basic:      { priceMonthly: 499,  features: "10 job applications/day, profile visibility, job alerts" },
-          pro:        { priceMonthly: 999,  features: "Unlimited applications, intro video profile, priority listing, resume builder" },
-          enterprise: { priceMonthly: 1999, features: "Everything in Pro, dedicated career counsellor, featured profile, API access" },
+          basic:      { priceMonthly: 499,  features: "10 job applications/day, profile visibility, job alerts", buttonLabel: "" },
+          pro:        { priceMonthly: 999,  features: "Unlimited applications, intro video profile, priority listing, resume builder", buttonLabel: "" },
+          enterprise: { priceMonthly: 1999, features: "Everything in Pro, dedicated career counsellor, featured profile, API access", buttonLabel: "" },
         },
         vendorPlans: config.vendorPlans ?? {
-          basic:      { priceMonthly: 999,  features: "5 active job posts, basic applicant tracking, email support" },
-          pro:        { priceMonthly: 2999, features: "25 active job posts, priority support, featured listings, intro video" },
-          enterprise: { priceMonthly: 9999, features: "Unlimited job posts, dedicated account manager, API access, bulk import" },
+          basic:      { priceMonthly: 999,  features: "5 active job posts, basic applicant tracking, email support", buttonLabel: "" },
+          pro:        { priceMonthly: 2999, features: "25 active job posts, priority support, featured listings, intro video", buttonLabel: "" },
+          enterprise: { priceMonthly: 9999, features: "Unlimited job posts, dedicated account manager, API access, bulk import", buttonLabel: "" },
         },
+        aboutUsImage: config.aboutUsImage || "",
+        contactImage: config.contactImage || "",
         featuredWorkerFee: config.featuredWorkerFee,
       },
     });
@@ -116,6 +118,7 @@ export const updateAdminConfig = async (req, res, next) => {
             const t = current[tier] || {};
             if (typeof incoming[tier].priceMonthly === "number") t.priceMonthly = incoming[tier].priceMonthly;
             if (typeof incoming[tier].features === "string") t.features = incoming[tier].features;
+            if (typeof incoming[tier].buttonLabel === "string") t.buttonLabel = incoming[tier].buttonLabel;
             current[tier] = t;
           }
         }
@@ -123,6 +126,8 @@ export const updateAdminConfig = async (req, res, next) => {
         config.markModified(key);
       }
     }
+    if (typeof req.body.aboutUsImage === "string") config.aboutUsImage = req.body.aboutUsImage;
+    if (typeof req.body.contactImage === "string") config.contactImage = req.body.contactImage;
 
     await config.save();
     res.json({ config });
@@ -251,11 +256,15 @@ export const listUsers = async (req, res, next) => {
     const sortDir = dir === "asc" ? 1 : -1;
 
     const [items, total] = await Promise.all([
-      User.find(filter)
-        .select("-passwordHash -refreshTokenVersion")
-        .sort({ [sortField]: sortDir })
-        .skip(skip)
-        .limit(limit),
+      User.aggregate([
+        { $match: filter },
+        { $sort: { [sortField]: sortDir } },
+        { $skip: skip },
+        { $limit: limit },
+        { $lookup: { from: "vendors", localField: "_id", foreignField: "userId", as: "_v" } },
+        { $addFields: { vendorId: { $ifNull: [{ $arrayElemAt: ["$_v._id", 0] }, null] } } },
+        { $project: { passwordHash: 0, refreshTokenVersion: 0, _v: 0 } },
+      ]),
       User.countDocuments(filter),
     ]);
 
@@ -730,6 +739,26 @@ export const uploadLogo = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const uploadAboutImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const config = await getConfig();
+    config.aboutUsImage = `/uploads/branding/${req.file.filename}`;
+    await config.save();
+    res.json({ imageUrl: config.aboutUsImage });
+  } catch (err) { next(err); }
+};
+
+export const uploadContactImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const config = await getConfig();
+    config.contactImage = `/uploads/branding/${req.file.filename}`;
+    await config.save();
+    res.json({ imageUrl: config.contactImage });
+  } catch (err) { next(err); }
 };
 
 export const listActivityLogs = async (req, res, next) => {
