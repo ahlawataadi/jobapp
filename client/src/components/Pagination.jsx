@@ -14,30 +14,48 @@ export default function Pagination({ page, pages, onChange }) {
     }`;
 
   return (
-    <div className="flex justify-center items-center gap-2 pt-2 flex-wrap">
-      <button className={btnCls(false)} disabled={page <= 1} onClick={() => onChange(page - 1)}>
+    <nav aria-label="Pagination" className="flex justify-center items-center gap-2 pt-2 flex-wrap">
+      <button
+        className={btnCls(false)}
+        disabled={page <= 1}
+        aria-disabled={page <= 1}
+        aria-label="Previous page"
+        onClick={() => onChange(page - 1)}
+      >
         ‹
       </button>
       {start > 1 && (
         <>
-          <button className={btnCls(false)} onClick={() => onChange(1)}>1</button>
-          {start > 2 && <span className="text-gray-400 px-1">…</span>}
+          <button className={btnCls(false)} aria-label="Page 1" onClick={() => onChange(1)}>1</button>
+          {start > 2 && <span aria-hidden="true" className="text-gray-400 px-1">…</span>}
         </>
       )}
       {nums.map((p) => (
-        <button key={p} className={btnCls(p === page)} onClick={() => onChange(p)}>
+        <button
+          key={p}
+          className={btnCls(p === page)}
+          onClick={() => onChange(p)}
+          aria-label={`Page ${p}`}
+          aria-current={p === page ? "page" : undefined}
+        >
           {p}
         </button>
       ))}
       {end < pages && (
         <>
-          {end < pages - 1 && <span className="text-gray-400 px-1">…</span>}
-          <button className={btnCls(false)} onClick={() => onChange(pages)}>{pages}</button>
+          {end < pages - 1 && <span aria-hidden="true" className="text-gray-400 px-1">…</span>}
+          <button className={btnCls(false)} aria-label={`Page ${pages}`} onClick={() => onChange(pages)}>{pages}</button>
         </>
       )}
-      <button className={btnCls(false)} disabled={page >= pages} onClick={() => onChange(page + 1)}>
+      <button
+        className={btnCls(false)}
+        disabled={page >= pages}
+        aria-disabled={page >= pages}
+        aria-label="Next page"
+        onClick={() => onChange(page + 1)}
+      >
         ›
       </button>
-    </div>
+    </nav>
   );
 }

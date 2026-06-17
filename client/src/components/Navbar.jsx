@@ -18,6 +18,7 @@ export default function Navbar() {
   const logoUrl = configData?.config?.logoUrl;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const triggerRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
@@ -26,6 +27,19 @@ export default function Navbar() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        triggerRef.current?.focus();
+      }
+      if (e.key === "Tab") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [menuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -44,13 +58,13 @@ export default function Navbar() {
     .toUpperCase();
 
   return (
-    <nav className="sticky top-0 z-30 bg-white border-b shadow-sm">
+    <nav className="sticky top-0 z-30 bg-white border-b shadow-sm" aria-label="Main navigation">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" aria-label={`${siteName} — go to home`}>
           {logoUrl ? (
-            <img src={logoUrl} alt={siteName} className="w-9 h-9 rounded-lg object-cover" />
+            <img src={logoUrl} alt="" aria-hidden="true" className="w-9 h-9 rounded-lg object-cover" />
           ) : (
-            <span className="bg-primary-600 text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg">
+            <span aria-hidden="true" className="bg-primary-600 text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg">
               H
             </span>
           )}
@@ -80,8 +94,8 @@ export default function Navbar() {
           </Link>
           <button
             onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title="Toggle theme"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-base"
           >
             {theme === "dark" ? "☀️" : "🌙"}
@@ -97,10 +111,14 @@ export default function Navbar() {
             </Link>
           )}
           {user && (
-            <Link to="/chat" className="relative px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700">
+            <Link
+              to="/chat"
+              className="relative px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-700"
+              aria-label={unread > 0 ? `Chat — ${unread} unread message${unread !== 1 ? "s" : ""}` : "Chat"}
+            >
               Chat
               {unread > 0 && (
-                <span className="absolute top-1 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                <span aria-hidden="true" className="absolute top-1 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {unread > 9 ? "9+" : unread}
                 </span>
               )}
@@ -129,38 +147,47 @@ export default function Navbar() {
           {user && (
             <div className="relative ml-1" ref={menuRef}>
               <button
+                ref={triggerRef}
                 onClick={() => setMenuOpen((o) => !o)}
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+                aria-label={`${user.name || user.email} — account menu`}
                 className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 font-semibold flex items-center justify-center hover:ring-2 hover:ring-primary-200 transition overflow-hidden"
               >
                 {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  <img src={user.avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
                 ) : (
-                  initials
+                  <span aria-hidden="true">{initials}</span>
                 )}
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-card-hover overflow-hidden text-sm">
-                  <div className="px-4 py-3 border-b">
+                <div
+                  role="menu"
+                  aria-label="Account menu"
+                  className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-card-hover overflow-hidden text-sm"
+                >
+                  <div className="px-4 py-3 border-b" role="presentation">
                     <p className="font-medium text-gray-900 truncate">{user?.name || user?.email}</p>
                     <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                   </div>
-                  <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
+                  <Link role="menuitem" to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                     My Profile
                   </Link>
-                  <Link to="/pricing" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 md:hidden">
+                  <Link role="menuitem" to="/pricing" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 md:hidden">
                     Pricing
                   </Link>
                   {user?.role === "seeker" && (
-                    <Link to="/worker-profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
+                    <Link role="menuitem" to="/worker-profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                       Worker Profile
                     </Link>
                   )}
                   {user?.role === "vendor" && (
-                    <Link to="/vendor/onboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
+                    <Link role="menuitem" to="/vendor/onboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                       Vendor Onboarding
                     </Link>
                   )}
                   <button
+                    role="menuitem"
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
                   >
