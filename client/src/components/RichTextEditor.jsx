@@ -1,17 +1,36 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect } from "react";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import { useEffect, useCallback } from "react";
 
-const btnCls = (active) =>
-  `px-2 py-1 rounded text-sm font-medium border transition-colors ${
-    active
-      ? "bg-primary-600 text-white border-primary-600"
-      : "bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700"
-  }`;
+const ToolBtn = ({ active, onClick, title, children, disabled }) => (
+  <button
+    type="button"
+    title={title}
+    disabled={disabled}
+    onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+    className={`px-2 py-1 rounded text-sm font-medium border transition-colors select-none ${
+      active
+        ? "bg-primary-600 text-white border-primary-600"
+        : "bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700 disabled:opacity-40"
+    }`}
+  >
+    {children}
+  </button>
+);
 
-export default function RichTextEditor({ value, onChange }) {
+const Divider = () => <span className="w-px h-5 bg-gray-300 mx-0.5 self-center" />;
+
+export default function RichTextEditor({ value, onChange, minHeight = 200 }) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      Underline,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Link.configure({ openOnClick: false, autolink: true }),
+    ],
     content: value || "",
     onUpdate({ editor: e }) {
       onChange(e.getHTML());
@@ -19,27 +38,96 @@ export default function RichTextEditor({ value, onChange }) {
   });
 
   useEffect(() => {
-    if (editor && value !== undefined && editor.getHTML() !== value) {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if (current !== value) {
       editor.commands.setContent(value || "", false);
     }
-  }, [value, editor]);
+  }, [value]);
+
+  const setLink = useCallback(() => {
+    if (!editor) return;
+    const prev = editor.getAttributes("link").href || "";
+    const url = window.prompt("URL", prev);
+    if (url === null) return;
+    if (url === "") { editor.chain().focus().unsetLink().run(); return; }
+    editor.chain().focus().setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) return null;
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-400 focus-within:border-primary-400">
+    <div className="border border-gray-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-400 focus-within:border-primary-400">
+      {/* Toolbar */}
       <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50">
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnCls(editor.isActive("bold"))}>B</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={btnCls(editor.isActive("italic"))}>I</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnCls(editor.isActive("heading", { level: 2 }))}>H2</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={btnCls(editor.isActive("heading", { level: 3 }))}>H3</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btnCls(editor.isActive("bulletList"))}>• List</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btnCls(editor.isActive("orderedList"))}>1. List</button>
-        <button type="button" onClick={() => editor.chain().focus().setParagraph().run()} className={btnCls(editor.isActive("paragraph"))}>¶</button>
+        {/* History */}
+        <ToolBtn title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>↩</ToolBtn>
+        <ToolBtn title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>↪</ToolBtn>
+        <Divider />
+
+        {/* Text style */}
+        <ToolBtn active={editor.isActive("bold")} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()}><b>B</b></ToolBtn>
+        <ToolBtn active={editor.isActive("italic")} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()}><i>I</i></ToolBtn>
+        <ToolBtn active={editor.isActive("underline")} title="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolBtn>
+        <ToolBtn active={editor.isActive("strike")} title="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolBtn>
+        <ToolBtn active={editor.isActive("code")} title="Inline code" onClick={() => editor.chain().focus().toggleCode().run()}>{"<>"}</ToolBtn>
+        <Divider />
+
+        {/* Headings */}
+        <ToolBtn active={editor.isActive("heading", { level: 1 })} title="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>H1</ToolBtn>
+        <ToolBtn active={editor.isActive("heading", { level: 2 })} title="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolBtn>
+        <ToolBtn active={editor.isActive("heading", { level: 3 })} title="Heading 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolBtn>
+        <ToolBtn active={editor.isActive("paragraph")} title="Paragraph" onClick={() => editor.chain().focus().setParagraph().run()}>¶</ToolBtn>
+        <Divider />
+
+        {/* Lists */}
+        <ToolBtn active={editor.isActive("bulletList")} title="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()}>• List</ToolBtn>
+        <ToolBtn active={editor.isActive("orderedList")} title="Numbered list" onClick={() => editor.chain().focus().toggleOrderedList().run()}>1. List</ToolBtn>
+        <Divider />
+
+        {/* Alignment */}
+        <ToolBtn active={editor.isActive({ textAlign: "left" })} title="Align left" onClick={() => editor.chain().focus().setTextAlign("left").run()}>⬅</ToolBtn>
+        <ToolBtn active={editor.isActive({ textAlign: "center" })} title="Align center" onClick={() => editor.chain().focus().setTextAlign("center").run()}>↔</ToolBtn>
+        <ToolBtn active={editor.isActive({ textAlign: "right" })} title="Align right" onClick={() => editor.chain().focus().setTextAlign("right").run()}>➡</ToolBtn>
+        <Divider />
+
+        {/* Blocks */}
+        <ToolBtn active={editor.isActive("blockquote")} title="Blockquote" onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</ToolBtn>
+        <ToolBtn active={editor.isActive("codeBlock")} title="Code block" onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{ "{}" }</ToolBtn>
+        <ToolBtn title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}>—</ToolBtn>
+        <Divider />
+
+        {/* Link */}
+        <ToolBtn active={editor.isActive("link")} title="Insert / edit link" onClick={setLink}>🔗</ToolBtn>
+        {editor.isActive("link") && (
+          <ToolBtn title="Remove link" onClick={() => editor.chain().focus().unsetLink().run()}>✂</ToolBtn>
+        )}
+        <Divider />
+
+        {/* Clear */}
+        <ToolBtn title="Clear formatting" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}>✕</ToolBtn>
       </div>
+
+      {/* Editor area */}
       <EditorContent
         editor={editor}
-        className="prose prose-sm max-w-none p-3 min-h-[160px] text-gray-900 focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[140px]"
+        style={{ minHeight }}
+        className={`
+          prose prose-sm max-w-none p-4 text-gray-900
+          [&_.ProseMirror]:outline-none
+          [&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mt-4 [&_.ProseMirror_h1]:mb-2
+          [&_.ProseMirror_h2]:text-xl  [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:mt-3 [&_.ProseMirror_h2]:mb-2
+          [&_.ProseMirror_h3]:text-lg  [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:mb-1
+          [&_.ProseMirror_p]:my-2
+          [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ul]:my-2
+          [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_ol]:my-2
+          [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-primary-300 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:text-gray-500 [&_.ProseMirror_blockquote]:italic [&_.ProseMirror_blockquote]:my-3
+          [&_.ProseMirror_code]:bg-gray-100 [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:text-sm [&_.ProseMirror_code]:font-mono
+          [&_.ProseMirror_pre]:bg-gray-900 [&_.ProseMirror_pre]:text-gray-100 [&_.ProseMirror_pre]:p-4 [&_.ProseMirror_pre]:rounded-lg [&_.ProseMirror_pre]:my-3 [&_.ProseMirror_pre]:overflow-x-auto
+          [&_.ProseMirror_a]:text-primary-600 [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:cursor-pointer
+          [&_.ProseMirror_hr]:border-gray-300 [&_.ProseMirror_hr]:my-4
+          [&_.ProseMirror_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child]:before:text-gray-400 [&_.ProseMirror_p.is-editor-empty:first-child]:before:float-left [&_.ProseMirror_p.is-editor-empty:first-child]:before:pointer-events-none
+        `}
       />
     </div>
   );

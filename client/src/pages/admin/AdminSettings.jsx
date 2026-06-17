@@ -5,10 +5,7 @@ import {
   useGetAdminConfigQuery,
   useUpdateAdminConfigMutation,
   useUploadLogoMutation,
-  useUploadAboutImageMutation,
-  useUploadContactImageMutation,
 } from "../../store/jobsApi.js";
-import RichTextEditor from "../../components/RichTextEditor.jsx";
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
@@ -20,8 +17,6 @@ const SECTIONS = {
 };
 
 const BRANDING_DEFAULTS = { siteName: "", siteTitle: "", metaDescription: "" };
-const ABOUT_DEFAULTS = { aboutUs: "" };
-const CONTACT_DEFAULTS = { email: "", phone: "", address: "", message: "" };
 const OTP_DEFAULTS = { emailEnabled: true, smsEnabled: true };
 const MAPS_DEFAULTS = { googleMapsApiKey: "" };
 
@@ -36,11 +31,7 @@ export default function AdminSettings() {
   const { data: configData, isLoading: configLoading } = useGetAdminConfigQuery();
   const [updateConfig, { isLoading: savingBranding }] = useUpdateAdminConfigMutation();
   const [uploadLogo, { isLoading: uploadingLogo }] = useUploadLogoMutation();
-  const [uploadAboutImage, { isLoading: uploadingAbout }] = useUploadAboutImageMutation();
-  const [uploadContactImage, { isLoading: uploadingContact }] = useUploadContactImageMutation();
   const [branding, setBranding] = useState(BRANDING_DEFAULTS);
-  const [about, setAbout] = useState(ABOUT_DEFAULTS);
-  const [contact, setContact] = useState(CONTACT_DEFAULTS);
   const [otpSettings, setOtpSettings] = useState(OTP_DEFAULTS);
   const [maps, setMaps] = useState(MAPS_DEFAULTS);
 
@@ -55,8 +46,6 @@ export default function AdminSettings() {
   useEffect(() => {
     if (configData?.config) {
       setBranding({ ...BRANDING_DEFAULTS, ...configData.config });
-      setAbout({ aboutUs: configData.config.aboutUs || "" });
-      setContact({ ...CONTACT_DEFAULTS, ...configData.config.contact });
       setOtpSettings({ ...OTP_DEFAULTS, ...configData.config.otpSettings });
       setMaps({ googleMapsApiKey: configData.config.googleMapsApiKey || "" });
     }
@@ -79,26 +68,6 @@ export default function AdminSettings() {
       setSavedMsg("Branding settings saved.");
     } catch {
       setSavedMsg("Failed to save branding settings.");
-    }
-  };
-
-  const saveAbout = async () => {
-    setSavedMsg("");
-    try {
-      await updateConfig(about).unwrap();
-      setSavedMsg("About Us content saved.");
-    } catch {
-      setSavedMsg("Failed to save About Us content.");
-    }
-  };
-
-  const saveContact = async () => {
-    setSavedMsg("");
-    try {
-      await updateConfig({ contact }).unwrap();
-      setSavedMsg("Contact Us info saved.");
-    } catch {
-      setSavedMsg("Failed to save Contact Us info.");
     }
   };
 
@@ -133,34 +102,6 @@ export default function AdminSettings() {
       setSavedMsg("Logo uploaded.");
     } catch {
       setSavedMsg("Failed to upload logo.");
-    }
-  };
-
-  const handleAboutImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSavedMsg("");
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      await uploadAboutImage(formData).unwrap();
-      setSavedMsg("About Us image uploaded.");
-    } catch {
-      setSavedMsg("Failed to upload About Us image.");
-    }
-  };
-
-  const handleContactImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSavedMsg("");
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      await uploadContactImage(formData).unwrap();
-      setSavedMsg("Contact Us image uploaded.");
-    } catch {
-      setSavedMsg("Failed to upload Contact Us image.");
     }
   };
 
@@ -209,71 +150,6 @@ export default function AdminSettings() {
           className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
         >
           {savingBranding ? "Saving..." : "Save branding settings"}
-        </button>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
-        <h2 className="font-bold text-gray-900">About Us page</h2>
-        <p className="text-sm text-gray-500">
-          Content and featured image shown on the public "About Us" page.
-        </p>
-        <div className="text-sm">
-          <label className="block text-gray-600 mb-1">Featured image</label>
-          <div className="flex items-center gap-3">
-            {configData?.config?.aboutUsImage && (
-              <img src={configData.config.aboutUsImage} alt="About Us" className="w-16 h-10 object-cover rounded border border-gray-200" />
-            )}
-            <input type="file" accept="image/*" onChange={handleAboutImageChange} disabled={uploadingAbout} className="text-sm" />
-          </div>
-        </div>
-        <RichTextEditor value={about.aboutUs} onChange={(html) => setAbout({ aboutUs: html })} />
-        <button
-          disabled={savingBranding}
-          onClick={saveAbout}
-          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
-        >
-          {savingBranding ? "Saving..." : "Save About Us content"}
-        </button>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
-        <h2 className="font-bold text-gray-900">Contact Us page</h2>
-        <p className="text-sm text-gray-500">
-          Contact details and intro message shown on the public "Contact Us" page.
-        </p>
-        <div className="text-sm">
-          <label className="block text-gray-600 mb-1">Featured image</label>
-          <div className="flex items-center gap-3">
-            {configData?.config?.contactImage && (
-              <img src={configData.config.contactImage} alt="Contact Us" className="w-16 h-10 object-cover rounded border border-gray-200" />
-            )}
-            <input type="file" accept="image/*" onChange={handleContactImageChange} disabled={uploadingContact} className="text-sm" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="sm:col-span-2">
-            <label className="block text-gray-600 mb-1">Intro message</label>
-            <RichTextEditor value={contact.message} onChange={(html) => setContact({ ...contact, message: html })} />
-          </div>
-          <div>
-            <label className="block text-gray-600 mb-1">Email</label>
-            <input className={inputCls} value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-gray-600 mb-1">Phone</label>
-            <input className={inputCls} value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-gray-600 mb-1">Address</label>
-            <input className={inputCls} value={contact.address} onChange={(e) => setContact({ ...contact, address: e.target.value })} />
-          </div>
-        </div>
-        <button
-          disabled={savingBranding}
-          onClick={saveContact}
-          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
-        >
-          {savingBranding ? "Saving..." : "Save Contact Us info"}
         </button>
       </div>
 

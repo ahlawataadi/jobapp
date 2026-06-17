@@ -73,6 +73,10 @@ const adminConfigSchema = new mongoose.Schema({
   },
   aboutUsImage: { type: String, default: "" },
   contactImage: { type: String, default: "" },
+  termsContent: { type: String, default: "" },
+  termsImage:   { type: String, default: "" },
+  privacyContent: { type: String, default: "" },
+  privacyImage:   { type: String, default: "" },
   featuredWorkerFee: {
     pricePerWeek: { type: Number, default: 99 },
   },

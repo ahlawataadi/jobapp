@@ -416,6 +416,14 @@ export const jobsApi = createApi({
       query: (formData) => ({ url: "/admin/branding/contact-image", method: "POST", body: formData }),
       invalidatesTags: ["AdminConfig"],
     }),
+    uploadTermsImage: builder.mutation({
+      query: (formData) => ({ url: "/admin/branding/terms-image", method: "POST", body: formData }),
+      invalidatesTags: ["AdminConfig"],
+    }),
+    uploadPrivacyImage: builder.mutation({
+      query: (formData) => ({ url: "/admin/branding/privacy-image", method: "POST", body: formData }),
+      invalidatesTags: ["AdminConfig"],
+    }),
   }),
 });
 
@@ -516,4 +524,6 @@ export const {
   useSeedSampleBlogsMutation,
   useUploadAboutImageMutation,
   useUploadContactImageMutation,
+  useUploadTermsImageMutation,
+  useUploadPrivacyImageMutation,
 } = jobsApi;
