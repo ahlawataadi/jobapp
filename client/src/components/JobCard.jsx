@@ -17,22 +17,29 @@ export default function JobCard({ job, selected, onToggleCompare }) {
   };
 
   const initial = (job.vendorSummary?.orgName || job.title || "?")[0].toUpperCase();
+  const company = job.vendorSummary?.orgName || "";
+  const district = job.location?.district || "";
 
   return (
-    <div
+    <article
       className={`group border rounded-xl p-4 bg-white shadow-card hover:shadow-card-hover transition-shadow cursor-grab active:cursor-grabbing ${
         selected ? "ring-2 ring-green-500 border-green-500" : "border-gray-200"
       }`}
       draggable
       onDragStart={handleDragStart}
+      aria-label={`${job.title}${company ? ` at ${company}` : ""}${district ? `, ${district}` : ""}`}
     >
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-lg bg-primary-50 text-primary-700 font-bold flex items-center justify-center shrink-0">
+        <div aria-hidden="true" className="w-11 h-11 rounded-lg bg-primary-50 text-primary-700 font-bold flex items-center justify-center shrink-0">
           {initial}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start gap-2">
-            <Link to={`/jobs/${job._id}`} className="font-semibold text-lg text-gray-900 hover:text-primary-700 truncate">
+            <Link
+              to={`/jobs/${job._id}`}
+              className="font-semibold text-lg text-gray-900 hover:text-primary-700 truncate"
+              aria-label={`${job.title}${company ? ` at ${company}` : ""}`}
+            >
               {job.title}
             </Link>
             {onToggleCompare && (
@@ -42,21 +49,22 @@ export default function JobCard({ job, selected, onToggleCompare }) {
                   checked={!!selected}
                   onChange={() => onToggleCompare(job)}
                   className="accent-primary-600"
+                  aria-label={`Compare ${job.title}`}
                 />
                 Compare
               </label>
             )}
           </div>
           <p className="text-sm text-gray-600 mt-0.5">
-            {job.vendorSummary?.orgName}
-            {job.location?.district && <span className="text-gray-400"> · {job.location.district}</span>}
+            {company}
+            {district && <span className="text-gray-400"> · {district}</span>}
           </p>
         </div>
       </div>
 
       <p className="text-sm text-gray-600 mt-3 line-clamp-2">{job.description}</p>
 
-      <div className="flex flex-wrap gap-2 text-xs mt-3">
+      <div className="flex flex-wrap gap-2 text-xs mt-3" aria-label="Job details">
         {job.category && (
           <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>
         )}
@@ -71,7 +79,7 @@ export default function JobCard({ job, selected, onToggleCompare }) {
           </span>
         )}
         {job.vendorSummary?.avgRating > 0 && (
-          <span className="bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-full">
+          <span className="bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-full" aria-label={`Rating: ${job.vendorSummary.avgRating.toFixed(1)} stars`}>
             ★ {job.vendorSummary.avgRating.toFixed(1)}
           </span>
         )}
@@ -82,10 +90,13 @@ export default function JobCard({ job, selected, onToggleCompare }) {
         <Link
           to={`/jobs/${job._id}`}
           className="text-primary-700 text-sm font-semibold group-hover:underline"
+          aria-label={`View details for ${job.title}`}
+          tabIndex={-1}
+          aria-hidden="true"
         >
           View details →
         </Link>
       </div>
-    </div>
+    </article>
   );
 }
