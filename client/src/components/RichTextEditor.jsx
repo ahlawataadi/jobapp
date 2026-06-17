@@ -129,14 +129,16 @@ export default function RichTextEditor({ value, onChange, minHeight = 200, uploa
 
         {/* Image */}
         <ToolBtn title="Insert image by URL" onClick={insertImageUrl}>🖼</ToolBtn>
-        <label
+        <button
+          type="button"
           title="Upload image from file"
           onMouseDown={(e) => e.preventDefault()}
+          onClick={() => imgInputRef.current?.click()}
           className="px-2 py-1 rounded text-sm font-medium border transition-colors bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700 cursor-pointer select-none"
         >
           📷
-          <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
-        </label>
+        </button>
+        <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
         <Divider />
 
         {/* Clear */}
