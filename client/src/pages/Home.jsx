@@ -11,6 +11,7 @@ import DistrictMap from "../components/DistrictMap.jsx";
 import JobCard from "../components/JobCard.jsx";
 import Carousel from "../components/Carousel.jsx";
 
+
 const THEME_STYLES = {
   primary: "from-primary-600 via-primary-500 to-accent-500",
   accent: "from-accent-500 via-orange-500 to-red-500",
@@ -158,15 +159,15 @@ function FeaturedCarousel() {
 }
 
 function LiveFeed() {
-  const { data, isLoading } = useGetJobsQuery({ sort: "recent", page: 1, limit: 6 });
+  const { data, isLoading } = useGetJobsQuery({ sort: "recent", page: 1, limit: 3 });
   const items = data?.items || [];
 
   if (isLoading) {
     return (
       <section>
-        <h2 className="text-xl font-bold text-gray-900 mb-3">Latest job postings</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <h2 className="text-xl font-bold text-gray-900 mb-3">Recently posted</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="border border-gray-200 rounded-xl p-4 bg-white space-y-3">
               <div className="skeleton h-5 w-2/3 rounded" />
               <div className="skeleton h-4 w-1/2 rounded" />
@@ -181,14 +182,15 @@ function LiveFeed() {
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-gray-900 mb-3">Latest job postings</h2>
-      <Carousel itemWidth={300}>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-bold text-gray-900">Recently posted</h2>
+        <Link to="/jobs" className="text-sm text-primary-700 font-medium hover:text-primary-900">View all jobs</Link>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4">
         {items.map((job) => (
-          <div key={job._id} className="min-w-[300px] shrink-0">
-            <JobCard job={job} />
-          </div>
+          <JobCard key={job._id} job={job} />
         ))}
-      </Carousel>
+      </div>
     </section>
   );
 }
