@@ -156,9 +156,23 @@ export default function App() {
           }
         />
         <Route path="/jobs" element={<JobSearch />} />
-        <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route
+          path="/jobs/:id"
+          element={
+            <ProtectedRoute>
+              <JobDetail />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/compare" element={<Compare />} />
-        <Route path="/vendors/:id" element={<VendorProfile />} />
+        <Route
+          path="/vendors/:id"
+          element={
+            <ProtectedRoute>
+              <VendorProfile />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/vendor/onboard"
           element={
