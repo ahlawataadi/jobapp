@@ -25,6 +25,8 @@ import {
   uploadLogo,
   uploadAboutImage,
   uploadContactImage,
+  uploadTermsImage,
+  uploadPrivacyImage,
   listActivityLogs,
 } from "../controllers/adminController.js";
 import {
@@ -102,6 +104,8 @@ router.get("/activity-logs", listActivityLogs);
 router.post("/branding/logo", logoUpload.single("logo"), uploadLogo);
 router.post("/branding/about-image", logoUpload.single("image"), uploadAboutImage);
 router.post("/branding/contact-image", logoUpload.single("image"), uploadContactImage);
+router.post("/branding/terms-image", logoUpload.single("image"), uploadTermsImage);
+router.post("/branding/privacy-image", logoUpload.single("image"), uploadPrivacyImage);
 
 router.get("/settings/integrations", getIntegrationSettings);
 router.put("/settings/integrations", updateIntegrationSettings);

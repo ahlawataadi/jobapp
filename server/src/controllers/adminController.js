@@ -46,6 +46,10 @@ export const getAdminConfig = async (req, res, next) => {
         },
         aboutUsImage: config.aboutUsImage || "",
         contactImage: config.contactImage || "",
+        termsContent: config.termsContent || "",
+        termsImage: config.termsImage || "",
+        privacyContent: config.privacyContent || "",
+        privacyImage: config.privacyImage || "",
         featuredWorkerFee: config.featuredWorkerFee,
       },
     });
@@ -128,6 +132,8 @@ export const updateAdminConfig = async (req, res, next) => {
     }
     if (typeof req.body.aboutUsImage === "string") config.aboutUsImage = req.body.aboutUsImage;
     if (typeof req.body.contactImage === "string") config.contactImage = req.body.contactImage;
+    if (typeof req.body.termsContent === "string") config.termsContent = req.body.termsContent;
+    if (typeof req.body.privacyContent === "string") config.privacyContent = req.body.privacyContent;
 
     await config.save();
     res.json({ config });
@@ -758,6 +764,26 @@ export const uploadContactImage = async (req, res, next) => {
     config.contactImage = `/uploads/branding/${req.file.filename}`;
     await config.save();
     res.json({ imageUrl: config.contactImage });
+  } catch (err) { next(err); }
+};
+
+export const uploadTermsImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const config = await getConfig();
+    config.termsImage = `/uploads/branding/${req.file.filename}`;
+    await config.save();
+    res.json({ imageUrl: config.termsImage });
+  } catch (err) { next(err); }
+};
+
+export const uploadPrivacyImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const config = await getConfig();
+    config.privacyImage = `/uploads/branding/${req.file.filename}`;
+    await config.save();
+    res.json({ imageUrl: config.privacyImage });
   } catch (err) { next(err); }
 };
 

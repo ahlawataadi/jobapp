@@ -37,6 +37,7 @@ import ContactUs from "./pages/ContactUs.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
+import AdminPages from "./pages/admin/AdminPages.jsx";
 import AdminBroadcastEmail from "./pages/admin/AdminBroadcastEmail.jsx";
 import AdminBroadcastSms from "./pages/admin/AdminBroadcastSms.jsx";
 import WorkerSearch from "./pages/WorkerSearch.jsx";
@@ -198,6 +199,7 @@ export default function App() {
           <Route path="banners" element={<AdminBanners />} />
           <Route path="webhooks" element={<AdminWebhooks />} />
           <Route path="import" element={<AdminImport />} />
+          <Route path="pages" element={<AdminPages />} />
           <Route path="fees" element={<AdminFees />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="broadcasts/email" element={<AdminBroadcastEmail />} />
