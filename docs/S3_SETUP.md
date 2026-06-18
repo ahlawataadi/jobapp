@@ -74,7 +74,19 @@ Uploaded images need to be viewable by anyone visiting the site.
    **Create access key** → choose **Application running outside AWS** →
    copy the **Access key ID** and **Secret access key**.
 
-## Step 4 — Set environment variables
+## Step 4 — Enter the credentials
+
+You can configure S3 **two ways**. The admin panel takes precedence; env vars
+are used as a fallback when the admin fields are blank.
+
+### Option A (recommended) — Admin panel
+
+1. Log in as admin → **Admin → Settings → File storage (Amazon S3)**.
+2. Tick **Enable S3 storage**, fill in **Bucket**, **Region**, **Access Key ID**,
+   **Secret Access Key**, and optionally the **Public URL / CDN**.
+3. **Save storage settings.** Changes take effect immediately — no restart.
+
+### Option B — Environment variables
 
 In `server/.env` (or your host's env settings):
 

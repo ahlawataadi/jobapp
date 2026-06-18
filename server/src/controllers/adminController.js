@@ -151,7 +151,7 @@ export const updateAdminConfig = async (req, res, next) => {
 export const getIntegrationSettings = async (req, res, next) => {
   try {
     const config = await getConfig();
-    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway });
+    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway, s3Storage: config.s3Storage });
   } catch (err) {
     next(err);
   }
@@ -159,7 +159,7 @@ export const getIntegrationSettings = async (req, res, next) => {
 
 export const updateIntegrationSettings = async (req, res, next) => {
   try {
-    const { smtp, sms, paymentGateway } = req.body;
+    const { smtp, sms, paymentGateway, s3Storage } = req.body;
     const config = await getConfig();
 
     if (smtp && typeof smtp === "object") {
@@ -171,9 +171,12 @@ export const updateIntegrationSettings = async (req, res, next) => {
     if (paymentGateway && typeof paymentGateway === "object") {
       config.paymentGateway = { ...(config.paymentGateway?.toObject?.() || config.paymentGateway || {}), ...paymentGateway };
     }
+    if (s3Storage && typeof s3Storage === "object") {
+      config.s3Storage = { ...(config.s3Storage?.toObject?.() || config.s3Storage || {}), ...s3Storage };
+    }
 
     await config.save();
-    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway });
+    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway, s3Storage: config.s3Storage });
   } catch (err) {
     next(err);
   }
