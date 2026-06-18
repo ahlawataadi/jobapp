@@ -1,4 +1,5 @@
 import { useGetAdminConfigQuery } from "../store/jobsApi.js";
+import { sanitizeHtml } from "../utils/sanitizeHtml.js";
 
 export default function PrivacyPolicy() {
   const { data, isLoading } = useGetAdminConfigQuery();
@@ -25,7 +26,7 @@ export default function PrivacyPolicy() {
       ) : hasContent ? (
         <div
           className="prose prose-gray max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
         />
       ) : (
         /* Static fallback if admin hasn't set content yet */

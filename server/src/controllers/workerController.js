@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import ContactUnlock from "../models/ContactUnlock.js";
+import { persistUpload } from "../utils/storage.js";
 
 const CATEGORY_ENUM = ["household", "home-repair", "automotive", "construction", "healthcare"];
 
@@ -10,10 +11,12 @@ export const listWorkers = async (req, res, next) => {
     const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 50);
     const lim = Math.min(Number(limit) || 20, 50);
 
+    // List all active seekers in the worker directory. A skill category is no
+    // longer required — registered seekers appear even before they complete
+    // their profile (it's only enforced when the user filters by a category).
     const filter = {
       role: "seeker",
       status: { $ne: "suspended" },
-      "workerProfile.skillCategory": { $exists: true, $ne: null },
     };
 
     if (category && CATEGORY_ENUM.includes(category)) {
@@ -215,7 +218,7 @@ export const uploadWorkerVideo = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     if (!req.file) return res.status(400).json({ message: "No video file uploaded" });
 
-    user.workerProfile.profileVideoUrl = `/uploads/videos/${req.file.filename}`;
+    user.workerProfile.profileVideoUrl = await persistUpload(req.file, "videos");
     await user.save();
     res.json({ profileVideoUrl: user.workerProfile.profileVideoUrl });
   } catch (err) {

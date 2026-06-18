@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetAdminConfigQuery } from "../store/jobsApi.js";
+import { sanitizeHtml } from "../utils/sanitizeHtml.js";
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
@@ -32,7 +33,7 @@ export default function ContactUs() {
         {isHtml ? (
           <div
             className="prose prose-gray prose-sm max-w-none mt-2 text-gray-500"
-            dangerouslySetInnerHTML={{ __html: message }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(message) }}
           />
         ) : (
           <p className="text-gray-500 mt-1">{message}</p>

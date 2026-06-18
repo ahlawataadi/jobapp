@@ -7,6 +7,7 @@ import User from "../models/User.js";
 import Job from "../models/Job.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
 import { parseCsv, toCsv } from "../utils/csv.js";
+import { persistUpload } from "../utils/storage.js";
 
 const paginate = (query) => {
   const page = Math.max(Number(query.page) || 1, 1);
@@ -150,7 +151,7 @@ export const updateAdminConfig = async (req, res, next) => {
 export const getIntegrationSettings = async (req, res, next) => {
   try {
     const config = await getConfig();
-    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway });
+    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway, s3Storage: config.s3Storage });
   } catch (err) {
     next(err);
   }
@@ -158,7 +159,7 @@ export const getIntegrationSettings = async (req, res, next) => {
 
 export const updateIntegrationSettings = async (req, res, next) => {
   try {
-    const { smtp, sms, paymentGateway } = req.body;
+    const { smtp, sms, paymentGateway, s3Storage } = req.body;
     const config = await getConfig();
 
     if (smtp && typeof smtp === "object") {
@@ -170,9 +171,12 @@ export const updateIntegrationSettings = async (req, res, next) => {
     if (paymentGateway && typeof paymentGateway === "object") {
       config.paymentGateway = { ...(config.paymentGateway?.toObject?.() || config.paymentGateway || {}), ...paymentGateway };
     }
+    if (s3Storage && typeof s3Storage === "object") {
+      config.s3Storage = { ...(config.s3Storage?.toObject?.() || config.s3Storage || {}), ...s3Storage };
+    }
 
     await config.save();
-    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway });
+    res.json({ smtp: config.smtp, sms: config.sms, paymentGateway: config.paymentGateway, s3Storage: config.s3Storage });
   } catch (err) {
     next(err);
   }
@@ -743,7 +747,7 @@ export const uploadLogo = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const config = await getConfig();
-    config.logoUrl = `/uploads/branding/${req.file.filename}`;
+    config.logoUrl = await persistUpload(req.file, "branding");
     await config.save();
     res.json({ logoUrl: config.logoUrl });
   } catch (err) {
@@ -755,7 +759,7 @@ export const uploadAboutImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const config = await getConfig();
-    config.aboutUsImage = `/uploads/branding/${req.file.filename}`;
+    config.aboutUsImage = await persistUpload(req.file, "branding");
     await config.save();
     res.json({ imageUrl: config.aboutUsImage });
   } catch (err) { next(err); }
@@ -765,7 +769,7 @@ export const uploadContactImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const config = await getConfig();
-    config.contactImage = `/uploads/branding/${req.file.filename}`;
+    config.contactImage = await persistUpload(req.file, "branding");
     await config.save();
     res.json({ imageUrl: config.contactImage });
   } catch (err) { next(err); }
@@ -775,7 +779,7 @@ export const uploadTermsImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const config = await getConfig();
-    config.termsImage = `/uploads/branding/${req.file.filename}`;
+    config.termsImage = await persistUpload(req.file, "branding");
     await config.save();
     res.json({ imageUrl: config.termsImage });
   } catch (err) { next(err); }
@@ -785,7 +789,7 @@ export const uploadPrivacyImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const config = await getConfig();
-    config.privacyImage = `/uploads/branding/${req.file.filename}`;
+    config.privacyImage = await persistUpload(req.file, "branding");
     await config.save();
     res.json({ imageUrl: config.privacyImage });
   } catch (err) { next(err); }
@@ -796,7 +800,8 @@ export const uploadPrivacyImage = async (req, res, next) => {
 export const uploadEditorImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    res.json({ url: `/uploads/branding/${req.file.filename}` });
+    const url = await persistUpload(req.file, "branding");
+    res.json({ url });
   } catch (err) { next(err); }
 };
 
