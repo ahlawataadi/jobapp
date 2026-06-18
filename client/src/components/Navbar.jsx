@@ -181,6 +181,9 @@ export default function Navbar() {
                       Worker Profile
                     </Link>
                   )}
+                  <Link role="menuitem" to="/saved" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
+                    Saved Jobs
+                  </Link>
                   {user?.role === "vendor" && (
                     <Link role="menuitem" to="/vendor/onboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50">
                       Vendor Onboarding

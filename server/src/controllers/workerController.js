@@ -189,6 +189,34 @@ export const buyContactPack = async (req, res, next) => {
   });
 };
 
+// POST /api/workers/me/resume — upload a resume (pdf/doc/docx)
+export const uploadResume = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!req.file) return res.status(400).json({ message: "No resume file uploaded" });
+
+    user.workerProfile.resumeUrl = await persistUpload(req.file, "resumes");
+    await user.save();
+    res.json({ resumeUrl: user.workerProfile.resumeUrl });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/workers/me/resume
+export const removeResume = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.workerProfile.resumeUrl = "";
+    await user.save();
+    res.json({ resumeUrl: "" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /api/workers/me/video — upload short intro video (premium feature)
 export const uploadWorkerVideo = async (req, res, next) => {
   try {

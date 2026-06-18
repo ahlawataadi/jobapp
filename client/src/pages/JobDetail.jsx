@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -6,6 +6,8 @@ import {
   useApplyToJobMutation,
   useListReviewsQuery,
   useCreateReviewMutation,
+  useSaveJobMutation,
+  useUnsaveJobMutation,
 } from "../store/jobsApi.js";
 import { jobTypeLabel, formatPay } from "../constants/jobTypes.js";
 
@@ -15,7 +17,25 @@ export default function JobDetail() {
   const { user } = useSelector((s) => s.auth);
   const { data, isLoading } = useGetJobQuery(id);
   const [apply, { isLoading: applying, isSuccess, error }] = useApplyToJobMutation();
+  const [saveJob] = useSaveJobMutation();
+  const [unsaveJob] = useUnsaveJobMutation();
   const [coverNote, setCoverNote] = useState("");
+
+  // Optimistic local bookmark state (the Redux auth user isn't an RTK cache entry).
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    setSaved(!!user?.savedJobs?.some((j) => String(j) === String(id)));
+  }, [user, id]);
+
+  const toggleSave = async () => {
+    const next = !saved;
+    setSaved(next);
+    try {
+      await (next ? saveJob(id) : unsaveJob(id)).unwrap();
+    } catch {
+      setSaved(!next); // revert on failure
+    }
+  };
 
   const job = data?.job;
   const { data: reviewData } = useListReviewsQuery(job?.vendorId, { skip: !job });
@@ -59,17 +79,35 @@ export default function JobDetail() {
               {job.vendorSummary?.orgName} · {job.location?.district}
             </p>
           </div>
-          {user && job.vendorSummary?.vendorUserId && String(user.id || user._id) !== job.vendorSummary.vendorUserId && (
-            <button
-              onClick={() => navigate(`/chat/${job.vendorSummary.vendorUserId}`)}
-              className="shrink-0 inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
-              </svg>
-              Chat
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {user && (
+              <button
+                onClick={toggleSave}
+                aria-pressed={saved}
+                aria-label={saved ? "Remove bookmark" : "Save job"}
+                title={saved ? "Saved — click to remove" : "Save this job"}
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg border transition-colors ${
+                  saved
+                    ? "bg-accent-50 text-accent-700 border-accent-200"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700"
+                }`}
+              >
+                <span aria-hidden="true">{saved ? "★" : "☆"}</span>
+                {saved ? "Saved" : "Save"}
+              </button>
+            )}
+            {user && job.vendorSummary?.vendorUserId && String(user.id || user._id) !== job.vendorSummary.vendorUserId && (
+              <button
+                onClick={() => navigate(`/chat/${job.vendorSummary.vendorUserId}`)}
+                className="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
+                </svg>
+                Chat
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 text-xs mt-4">
           {job.category && <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{job.category}</span>}

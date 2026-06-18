@@ -10,6 +10,9 @@ import {
   suggestJobs,
   districtStats,
   importMyJobs,
+  listSavedJobs,
+  saveJob,
+  unsaveJob,
 } from "../controllers/jobController.js";
 import { applyToJob, jobApplicants } from "../controllers/applicationController.js";
 import { requireAuth, requireRole, requireVendor } from "../middleware/auth.js";
@@ -21,6 +24,7 @@ router.get("/", listJobs);
 router.get("/suggest", suggestJobs);
 router.get("/stats/districts", districtStats);
 router.post("/compare", compareJobs);
+router.get("/saved/me", requireAuth, listSavedJobs);
 router.get("/mine", requireAuth, requireRole("vendor"), requireVendor, listMyJobs);
 router.post(
   "/import",
@@ -38,5 +42,8 @@ router.delete("/:id", requireAuth, requireRole("vendor"), requireVendor, deleteJ
 
 router.post("/:id/apply", requireAuth, requireRole("seeker", "vendor"), applyToJob);
 router.get("/:id/applicants", requireAuth, requireRole("vendor"), requireVendor, jobApplicants);
+
+router.post("/:id/save", requireAuth, saveJob);
+router.delete("/:id/save", requireAuth, unsaveJob);
 
 export default router;

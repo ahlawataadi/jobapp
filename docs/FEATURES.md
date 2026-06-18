@@ -53,8 +53,8 @@
 | Email on application status change | ✅ | |
 | Intro video upload (premium) | ✅ | Server-enforced active subscription (402 otherwise) |
 | Subscribe to a seeker plan | ✅ | Razorpay; free plan activates instantly |
-| Resume upload / builder | 🚧 | `resumeUrl` accepted but no upload endpoint |
-| Saved / bookmarked jobs | 🚧 | |
+| Resume upload (PDF/DOC/DOCX) | ✅ | Uploaded on profile; auto-attached on apply |
+| Saved / bookmarked jobs | ✅ | Save toggle on job detail; Saved Jobs page |
 
 ## 5. Employer / Vendor
 
@@ -121,11 +121,11 @@
 
 ## 9. Roadmap (prioritized)
 
-1. **Resume upload** for seekers (endpoint + profile field + UI).
-2. **In-app notifications** (model + center) and vendor alerts beyond email.
-3. **Real-time chat** via websockets (replace polling).
-4. **Saved/bookmarked jobs**.
-5. **Automated test suite** + request validation + OpenAPI.
-6. **Image compression** on upload; **config caching**.
-7. **Secrets encryption at rest**; sandbox admin analytics script.
+1. ~~Resume upload for seekers~~ ✅ shipped (Group A).
+2. ~~Saved/bookmarked jobs~~ ✅ shipped (Group A).
+3. **In-app notifications** (model + center) and vendor alerts beyond email — Group B.
+4. **Real-time chat** via websockets (replace polling) — Group B.
+5. **Automated test suite** + request validation + OpenAPI — Group C.
+6. **Image compression** on upload; **config caching** — Group D.
+7. **Secrets encryption at rest**; sandbox admin analytics script — Group D.
 8. **Self-serve featured placement** checkout (close the ⚠️ gap).
