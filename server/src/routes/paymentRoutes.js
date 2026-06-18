@@ -5,6 +5,8 @@ import {
   razorpayWebhook,
   createSubscriptionOrder,
   verifySubscriptionPayment,
+  createContactPackOrder,
+  verifyContactPackPurchase,
 } from "../controllers/paymentController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -17,6 +19,10 @@ router.post("/verify", requireAuth, verifyPayment);
 // Subscription purchase
 router.post("/subscribe/create-order", requireAuth, createSubscriptionOrder);
 router.post("/subscribe/verify", requireAuth, verifySubscriptionPayment);
+
+// Contact-pack purchase (credits granted only after payment verification)
+router.post("/contact-pack/create-order", requireAuth, createContactPackOrder);
+router.post("/contact-pack/verify", requireAuth, verifyContactPackPurchase);
 
 // Razorpay webhook (raw body required — handled in app.js)
 router.post("/webhook", razorpayWebhook);

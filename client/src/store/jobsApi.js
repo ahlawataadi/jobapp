@@ -302,8 +302,11 @@ export const jobsApi = createApi({
       query: (id) => ({ url: `/workers/${id}/unlock`, method: "POST" }),
       invalidatesTags: (r, e, id) => [{ type: "Worker", id }, "Me"],
     }),
-    buyContactPack: builder.mutation({
-      query: (body) => ({ url: "/workers/contact-packs/buy", method: "POST", body }),
+    createContactPackOrder: builder.mutation({
+      query: (body) => ({ url: "/payments/contact-pack/create-order", method: "POST", body }),
+    }),
+    verifyContactPackPurchase: builder.mutation({
+      query: (body) => ({ url: "/payments/contact-pack/verify", method: "POST", body }),
       invalidatesTags: ["Me"],
     }),
     adminVerifyWorker: builder.mutation({
@@ -508,7 +511,8 @@ export const {
   useGetWorkerQuery,
   useUpdateMyWorkerProfileMutation,
   useUnlockWorkerContactMutation,
-  useBuyContactPackMutation,
+  useCreateContactPackOrderMutation,
+  useVerifyContactPackPurchaseMutation,
   useAdminVerifyWorkerMutation,
   useListConversationsQuery,
   useGetConversationQuery,

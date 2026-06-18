@@ -226,15 +226,17 @@ export const changePassword = async (req, res, next) => {
       return res.status(400).json({ message: "currentPassword and newPassword are required" });
     }
 
-    const ok = await req.user.comparePassword(currentPassword);
+    // req.user is loaded without the password hash, so re-fetch the full doc.
+    const user = await User.findById(req.user._id);
+    const ok = await user.comparePassword(currentPassword);
     if (!ok) return res.status(401).json({ message: "Current password is incorrect" });
 
-    await req.user.setPassword(newPassword);
-    req.user.refreshTokenVersion += 1;
-    await req.user.save();
+    await user.setPassword(newPassword);
+    user.refreshTokenVersion += 1;
+    await user.save();
 
-    const accessToken = await issueTokens(res, req.user);
-    res.json({ user: req.user.toSafeJSON(), accessToken });
+    const accessToken = await issueTokens(res, user);
+    res.json({ user: user.toSafeJSON(), accessToken });
   } catch (err) {
     next(err);
   }

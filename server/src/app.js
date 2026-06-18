@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import path from "path";
 import cors from "cors";
 import helmet from "helmet";
@@ -63,7 +64,17 @@ const apiLimiter = rateLimit({
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+// Readiness probe: report unhealthy when the DB connection is down so
+// load balancers / orchestrators can route around a broken instance.
+app.get("/health", (req, res) => {
+  const dbState = mongoose.connection.readyState; // 1 = connected
+  const ok = dbState === 1;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? "ok" : "degraded",
+    db: ok ? "connected" : "disconnected",
+    uptime: process.uptime(),
+  });
+});
 
 app.use("/api", apiLimiter);
 app.use("/api/auth", authLimiter, authRoutes);

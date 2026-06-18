@@ -199,6 +199,95 @@ export const verifySubscriptionPayment = async (req, res, next) => {
   }
 };
 
+// POST /api/payments/contact-pack/create-order
+// body: { pack: "starter" | "standard" | "pro" }
+// Vendors must pay for contact-unlock credits — credits are only granted after
+// the signature is verified (see verifyContactPackPurchase).
+export const createContactPackOrder = async (req, res, next) => {
+  try {
+    if (req.user.role !== "vendor") {
+      return res.status(403).json({ message: "Only vendors can purchase contact packs" });
+    }
+    const { pack } = req.body;
+    const config = await getConfig();
+    const packs = config.contactPacks?.toObject?.() || config.contactPacks || {};
+    const packConfig = packs[pack];
+    if (!packConfig) {
+      return res.status(400).json({ message: `Invalid pack. Choose: ${Object.keys(packs).join(", ")}` });
+    }
+
+    const amountPaise = Math.round((packConfig.price || 0) * 100);
+    if (amountPaise <= 0) {
+      return res.status(400).json({ message: "Contact pack price is not configured" });
+    }
+
+    const keys = getGatewayKeys(config);
+    const razorpay = getRazorpay(keys);
+    const order = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: "INR",
+      receipt: `pack_${req.user._id}_${Date.now()}`,
+      notes: { userId: req.user._id.toString(), pack },
+    });
+
+    await Payment.create({
+      type: "contactPack",
+      userId: req.user._id,
+      contactPackKey: pack,
+      creditsAdded: packConfig.credits || 0,
+      razorpayOrderId: order.id,
+      amount: amountPaise,
+      status: "created",
+    });
+
+    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: keys.keyId, pack });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/payments/contact-pack/verify
+// body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+export const verifyContactPackPurchase = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Missing payment verification fields" });
+    }
+
+    const config = await getConfig();
+    const keys = getGatewayKeys(config);
+    const expected = crypto
+      .createHmac("sha256", keys.keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id, type: "contactPack" });
+    if (!payment) return res.status(404).json({ message: "Payment record not found" });
+    if (payment.status === "paid") {
+      return res.json({ message: "Already processed", credits: payment.creditsAdded });
+    }
+
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.razorpaySignature = razorpay_signature;
+    payment.status = "paid";
+    await payment.save();
+
+    const user = await User.findById(payment.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.contactCredits += payment.creditsAdded;
+    await user.save();
+
+    res.json({ message: "Credits added", contactCredits: user.contactCredits, creditsAdded: payment.creditsAdded });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /api/payments/webhook  (Razorpay webhook - source of truth)
 export const razorpayWebhook = async (req, res, next) => {
   try {
@@ -226,11 +315,28 @@ export const razorpayWebhook = async (req, res, next) => {
         payment.razorpayPaymentId = paymentId;
         await payment.save();
 
-        const vendor = await Vendor.findById(payment.vendorId);
-        if (vendor) {
-          vendor.paymentStatus = "paid";
-          vendor.status = "active";
-          await vendor.save();
+        // Fulfil the order based on its type (idempotent — only runs once).
+        if (payment.type === "vendor_signup") {
+          const vendor = await Vendor.findById(payment.vendorId);
+          if (vendor) {
+            vendor.paymentStatus = "paid";
+            vendor.status = "active";
+            await vendor.save();
+          }
+        } else if (payment.type === "subscription") {
+          const user = await User.findById(payment.userId);
+          if (user) {
+            const exp = new Date(); exp.setDate(exp.getDate() + 30);
+            user.subscription.plan = payment.subscriptionPlan;
+            user.subscription.expiresAt = exp;
+            await user.save();
+          }
+        } else if (payment.type === "contactPack") {
+          const user = await User.findById(payment.userId);
+          if (user) {
+            user.contactCredits += payment.creditsAdded;
+            await user.save();
+          }
         }
       }
     }
