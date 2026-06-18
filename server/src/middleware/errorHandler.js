@@ -14,7 +14,11 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   const status = err.status || 500;
-  res.status(status).json({
-    message: err.message || "Internal server error",
-  });
+  // Don't leak internal error details on 5xx in production — surface a generic
+  // message. Client (4xx) errors keep their message since they're intentional.
+  const message =
+    status >= 500 && process.env.NODE_ENV === "production"
+      ? "Internal server error"
+      : err.message || "Internal server error";
+  res.status(status).json({ message });
 };
