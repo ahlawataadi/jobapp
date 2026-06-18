@@ -5,6 +5,7 @@ import { sendMail } from "../utils/mailer.js";
 import { generateAndSendOtp, verifyOtp as checkOtp } from "../utils/otp.js";
 import { logActivity } from "../utils/activityLog.js";
 import { getConfig } from "../models/AdminConfig.js";
+import { persistUpload } from "../utils/storage.js";
 
 // Picks a verification channel honoring admin OTP toggles. Returns null if
 // no channel is enabled, meaning verification should be skipped entirely.
@@ -242,7 +243,7 @@ export const changePassword = async (req, res, next) => {
 export const uploadAvatar = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    req.user.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    req.user.avatarUrl = await persistUpload(req.file, "avatars");
     await req.user.save();
     res.json({ user: req.user.toSafeJSON() });
   } catch (err) {

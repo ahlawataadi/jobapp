@@ -1,5 +1,6 @@
 import Vendor from "../models/Vendor.js";
 import { getConfig } from "../models/AdminConfig.js";
+import { persistUpload } from "../utils/storage.js";
 
 // Vendor signup: creates a Vendor profile linked to the logged-in user.
 // Activation depends on AdminConfig.paymentRequired.
@@ -53,7 +54,7 @@ export const uploadVendorDocuments = async (req, res, next) => {
     if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
 
     const files = req.files || [];
-    const paths = files.map((f) => `/uploads/vendor-docs/${f.filename}`);
+    const paths = await Promise.all(files.map((f) => persistUpload(f, "vendor-docs")));
     vendor.documents.push(...paths);
     await vendor.save();
 
@@ -69,7 +70,7 @@ export const uploadVendorLogo = async (req, res, next) => {
     if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    vendor.logoUrl = `/uploads/avatars/${req.file.filename}`;
+    vendor.logoUrl = await persistUpload(req.file, "avatars");
     await vendor.save();
     res.json({ vendor });
   } catch (err) {
@@ -121,7 +122,7 @@ export const uploadVendorVideo = async (req, res, next) => {
     if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
     if (!req.file) return res.status(400).json({ message: "No video file uploaded" });
 
-    vendor.profileVideoUrl = `/uploads/videos/${req.file.filename}`;
+    vendor.profileVideoUrl = await persistUpload(req.file, "videos");
     await vendor.save();
     res.json({ vendor });
   } catch (err) {

@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Broadcast from "../models/Broadcast.js";
 import { sendMail } from "../utils/mailer.js";
 import { sendSms } from "../utils/sms.js";
+import { persistUpload } from "../utils/storage.js";
 
 const audienceFilter = (audience) => {
   if (audience === "seekers") return { role: "seeker" };
@@ -27,8 +28,10 @@ export const createEmailBroadcast = async (req, res, next) => {
     if (!title || !audience) return res.status(400).json({ message: "title and audience are required" });
 
     const recipients = await User.find(audienceFilter(audience)).select("email name");
-    const imageUrl = req.file ? `/uploads/broadcasts/${req.file.filename}` : "";
+    const imageUrl = req.file ? await persistUpload(req.file, "broadcasts") : "";
     const origin = req.headers.origin || "";
+    // S3 returns an absolute URL; local storage returns a relative path needing the origin.
+    const imageSrc = imageUrl && /^https?:\/\//.test(imageUrl) ? imageUrl : `${origin}${imageUrl}`;
 
     const broadcast = await Broadcast.create({
       channel: "email",
@@ -44,7 +47,7 @@ export const createEmailBroadcast = async (req, res, next) => {
     for (const recipient of recipients) {
       const html = `
         <h2>${title}</h2>
-        ${imageUrl ? `<img src="${origin}${imageUrl}" alt="" style="max-width:100%;" />` : ""}
+        ${imageUrl ? `<img src="${imageSrc}" alt="" style="max-width:100%;" />` : ""}
         <p>${(description || "").replace(/\n/g, "<br/>")}</p>
       `;
       const { sent } = await sendMail({ to: recipient.email, subject: title, html });

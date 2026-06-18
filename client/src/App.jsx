@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { api } from "./api/axios.js";
@@ -6,47 +6,50 @@ import { setCredentials, logout } from "./store/authSlice.js";
 import { useGetAdminConfigQuery } from "./store/jobsApi.js";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Home from "./pages/Home.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import JobSearch from "./pages/JobSearch.jsx";
-import JobDetail from "./pages/JobDetail.jsx";
-import Compare from "./pages/Compare.jsx";
-import VendorOnboard from "./pages/VendorOnboard.jsx";
-import VendorDashboard from "./pages/VendorDashboard.jsx";
-import MyApplications from "./pages/MyApplications.jsx";
-import AdminLayout from "./pages/admin/AdminLayout.jsx";
-import AdminPanel from "./pages/AdminPanel.jsx";
-import AdminAnalytics from "./pages/admin/AdminAnalytics.jsx";
-import AdminPayments from "./pages/admin/AdminPayments.jsx";
-import AdminWebhooks from "./pages/admin/AdminWebhooks.jsx";
-import AdminBanners from "./pages/admin/AdminBanners.jsx";
-import AdminImport from "./pages/admin/AdminImport.jsx";
-import AdminJobs from "./pages/admin/AdminJobs.jsx";
-import AdminBlog from "./pages/admin/AdminBlog.jsx";
-import AdminFees from "./pages/admin/AdminFees.jsx";
-import BlogList from "./pages/BlogList.jsx";
-import BlogPost from "./pages/BlogPost.jsx";
-import VendorProfile from "./pages/VendorProfile.jsx";
-import Profile from "./pages/Profile.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import VerifyOtp from "./pages/VerifyOtp.jsx";
-import AboutUs from "./pages/AboutUs.jsx";
-import ContactUs from "./pages/ContactUs.jsx";
-import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
-import TermsAndConditions from "./pages/TermsAndConditions.jsx";
-import AdminSettings from "./pages/admin/AdminSettings.jsx";
-import AdminPages from "./pages/admin/AdminPages.jsx";
-import AdminBroadcastEmail from "./pages/admin/AdminBroadcastEmail.jsx";
-import AdminBroadcastSms from "./pages/admin/AdminBroadcastSms.jsx";
-import WorkerSearch from "./pages/WorkerSearch.jsx";
-import WorkerPublicProfile from "./pages/WorkerPublicProfile.jsx";
-import WorkerProfileSetup from "./pages/WorkerProfileSetup.jsx";
-import ChatPage from "./pages/ChatPage.jsx";
-import Pricing from "./pages/Pricing.jsx";
 import Footer from "./components/Footer.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+
+// Route components are code-split so the initial bundle stays small; the admin
+// area, charts, and editor only load when their route is actually visited.
+const Home = lazy(() => import("./pages/Home.jsx"));
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Register = lazy(() => import("./pages/Register.jsx"));
+const JobSearch = lazy(() => import("./pages/JobSearch.jsx"));
+const JobDetail = lazy(() => import("./pages/JobDetail.jsx"));
+const Compare = lazy(() => import("./pages/Compare.jsx"));
+const VendorOnboard = lazy(() => import("./pages/VendorOnboard.jsx"));
+const VendorDashboard = lazy(() => import("./pages/VendorDashboard.jsx"));
+const MyApplications = lazy(() => import("./pages/MyApplications.jsx"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout.jsx"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel.jsx"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics.jsx"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments.jsx"));
+const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks.jsx"));
+const AdminBanners = lazy(() => import("./pages/admin/AdminBanners.jsx"));
+const AdminImport = lazy(() => import("./pages/admin/AdminImport.jsx"));
+const AdminJobs = lazy(() => import("./pages/admin/AdminJobs.jsx"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog.jsx"));
+const AdminFees = lazy(() => import("./pages/admin/AdminFees.jsx"));
+const BlogList = lazy(() => import("./pages/BlogList.jsx"));
+const BlogPost = lazy(() => import("./pages/BlogPost.jsx"));
+const VendorProfile = lazy(() => import("./pages/VendorProfile.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
+const VerifyOtp = lazy(() => import("./pages/VerifyOtp.jsx"));
+const AboutUs = lazy(() => import("./pages/AboutUs.jsx"));
+const ContactUs = lazy(() => import("./pages/ContactUs.jsx"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.jsx"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions.jsx"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings.jsx"));
+const AdminPages = lazy(() => import("./pages/admin/AdminPages.jsx"));
+const AdminBroadcastEmail = lazy(() => import("./pages/admin/AdminBroadcastEmail.jsx"));
+const AdminBroadcastSms = lazy(() => import("./pages/admin/AdminBroadcastSms.jsx"));
+const WorkerSearch = lazy(() => import("./pages/WorkerSearch.jsx"));
+const WorkerPublicProfile = lazy(() => import("./pages/WorkerPublicProfile.jsx"));
+const WorkerProfileSetup = lazy(() => import("./pages/WorkerProfileSetup.jsx"));
+const ChatPage = lazy(() => import("./pages/ChatPage.jsx"));
+const Pricing = lazy(() => import("./pages/Pricing.jsx"));
 
 function SiteMeta() {
   const { data } = useGetAdminConfigQuery();
@@ -113,6 +116,7 @@ export default function App() {
       </a>
       <Navbar />
       <main id="main-content" className="flex-1">
+      <Suspense fallback={<div className="max-w-6xl mx-auto px-4 py-10"><div className="skeleton h-64 rounded-xl" /></div>}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -226,6 +230,7 @@ export default function App() {
           <Route path="broadcasts/sms" element={<AdminBroadcastSms />} />
         </Route>
       </Routes>
+      </Suspense>
       </main>
       <Footer />
     </div>

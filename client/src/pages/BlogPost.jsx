@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useGetBlogBySlugQuery } from "../store/jobsApi.js";
+import { sanitizeHtml } from "../utils/sanitizeHtml.js";
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -45,7 +46,7 @@ export default function BlogPost() {
       {/* Content is authored by trusted admins. */}
       <div
         className="blog-content mt-6 text-gray-800 leading-relaxed [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-4 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_a]:text-primary-600 [&_a]:underline [&_img]:rounded-lg [&_img]:my-4"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
       />
     </article>
   );

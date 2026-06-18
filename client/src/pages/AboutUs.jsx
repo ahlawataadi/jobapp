@@ -1,4 +1,5 @@
 import { useGetAdminConfigQuery } from "../store/jobsApi.js";
+import { sanitizeHtml } from "../utils/sanitizeHtml.js";
 
 export default function AboutUs() {
   const { data, isLoading } = useGetAdminConfigQuery();
@@ -21,7 +22,7 @@ export default function AboutUs() {
       ) : isHtml ? (
         <div
           className="prose prose-gray max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
         />
       ) : (
         content.split("\n\n").map((para, i) => <p key={i}>{para}</p>)

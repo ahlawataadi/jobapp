@@ -53,10 +53,19 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// General throttle for the rest of the API to blunt scraping / abuse.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
+app.use("/api", apiLimiter);
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/jobs", jobRoutes);
