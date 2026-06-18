@@ -22,6 +22,7 @@ const DEFAULT_VENDOR_PLANS = {
 };
 
 const DEFAULT_FEATURED = { pricePerWeek: 99 };
+const DEFAULT_FEATURED_VENDOR = { pricePerWeek: 199 };
 
 function Section({ title, description, onSave, saving, children }) {
   return (
@@ -52,6 +53,7 @@ export default function AdminFees() {
   const [seekerPlans, setSeekerPlans] = useState(DEFAULT_SEEKER_PLANS);
   const [vendorPlans, setVendorPlans] = useState(DEFAULT_VENDOR_PLANS);
   const [featured, setFeatured] = useState(DEFAULT_FEATURED);
+  const [featuredVendor, setFeaturedVendor] = useState(DEFAULT_FEATURED_VENDOR);
 
   useEffect(() => {
     const cfg = configData?.config;
@@ -85,6 +87,9 @@ export default function AdminFees() {
     }
     if (cfg.featuredWorkerFee) {
       setFeatured({ pricePerWeek: cfg.featuredWorkerFee.pricePerWeek ?? 99 });
+    }
+    if (cfg.featuredVendorFee) {
+      setFeaturedVendor({ pricePerWeek: cfg.featuredVendorFee.pricePerWeek ?? 199 });
     }
   }, [configData]);
 
@@ -124,6 +129,15 @@ export default function AdminFees() {
     try {
       await updateConfig({ featuredWorkerFee: featured }).unwrap();
       notify("Featured worker fee saved.");
+    } catch {
+      notify("Failed to save.");
+    }
+  };
+
+  const saveFeaturedVendor = async () => {
+    try {
+      await updateConfig({ featuredVendorFee: featuredVendor }).unwrap();
+      notify("Featured vendor fee saved.");
     } catch {
       notify("Failed to save.");
     }
@@ -345,6 +359,28 @@ export default function AdminFees() {
               className={inputCls + " pl-7"}
               value={featured.pricePerWeek}
               onChange={(e) => setFeatured({ pricePerWeek: Number(e.target.value) })}
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Featured Vendor Fee */}
+      <Section
+        title="Featured Vendor Fee"
+        description="Fee charged to highlight an employer/vendor at the top of listings and the home page. Admin can also grant featured status manually from a vendor's profile."
+        onSave={saveFeaturedVendor}
+        saving={saving}
+      >
+        <div className="max-w-xs text-sm">
+          <label className="block text-gray-600 mb-1">Price per week (₹/week)</label>
+          <div className="relative">
+            <span className="absolute left-3 top-2 text-gray-400">₹</span>
+            <input
+              type="number"
+              min="0"
+              className={inputCls + " pl-7"}
+              value={featuredVendor.pricePerWeek}
+              onChange={(e) => setFeaturedVendor({ pricePerWeek: Number(e.target.value) })}
             />
           </div>
         </div>

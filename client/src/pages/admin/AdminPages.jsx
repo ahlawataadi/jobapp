@@ -6,6 +6,7 @@ import {
   useUploadContactImageMutation,
   useUploadTermsImageMutation,
   useUploadPrivacyImageMutation,
+  useUploadEditorImageMutation,
 } from "../../store/jobsApi.js";
 import RichTextEditor from "../../components/RichTextEditor.jsx";
 
@@ -66,9 +67,24 @@ export default function AdminPages() {
   const [uploadContactImage, { isLoading: upContact }] = useUploadContactImageMutation();
   const [uploadTermsImage,   { isLoading: upTerms }]   = useUploadTermsImageMutation();
   const [uploadPrivacyImage, { isLoading: upPrivacy }] = useUploadPrivacyImageMutation();
+  const [uploadEditorImage] = useUploadEditorImageMutation();
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  // Inline editor images upload to the server and return a small URL,
+  // instead of embedding a large base64 blob in the saved HTML.
+  const uploadInlineImage = async (file) => {
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const { url } = await uploadEditorImage(fd).unwrap();
+      return url;
+    } catch {
+      flash(false, "Image upload failed.");
+      return null;
+    }
+  };
 
   // Per-page state
   const [aboutContent, setAboutContent] = useState("");
@@ -179,7 +195,7 @@ export default function AdminPages() {
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Page content</label>
-            <RichTextEditor value={aboutContent} onChange={setAboutContent} minHeight={280} />
+            <RichTextEditor value={aboutContent} onChange={setAboutContent} minHeight={280} uploadImageFn={uploadInlineImage} />
           </div>
           <SaveBtn saving={saving} />
         </form>
@@ -197,7 +213,7 @@ export default function AdminPages() {
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Intro message</label>
-            <RichTextEditor value={contactContent} onChange={setContactContent} minHeight={160} />
+            <RichTextEditor value={contactContent} onChange={setContactContent} minHeight={160} uploadImageFn={uploadInlineImage} />
           </div>
           <div className="grid sm:grid-cols-2 gap-4 text-sm pt-2 border-t border-gray-100">
             <div>
@@ -229,7 +245,7 @@ export default function AdminPages() {
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Page content</label>
-            <RichTextEditor value={termsContent} onChange={setTermsContent} minHeight={320} />
+            <RichTextEditor value={termsContent} onChange={setTermsContent} minHeight={320} uploadImageFn={uploadInlineImage} />
           </div>
           <SaveBtn saving={saving} />
         </form>
@@ -247,7 +263,7 @@ export default function AdminPages() {
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Page content</label>
-            <RichTextEditor value={privacyContent} onChange={setPrivacyContent} minHeight={320} />
+            <RichTextEditor value={privacyContent} onChange={setPrivacyContent} minHeight={320} uploadImageFn={uploadInlineImage} />
           </div>
           <SaveBtn saving={saving} />
         </form>
