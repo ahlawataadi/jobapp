@@ -10,7 +10,10 @@ const ToolBtn = ({ active, onClick, title, children, disabled }) => (
   <button
     type="button"
     title={title}
+    aria-label={title}
+    aria-pressed={active !== undefined ? !!active : undefined}
     disabled={disabled}
+    aria-disabled={disabled}
     onMouseDown={(e) => { e.preventDefault(); onClick(); }}
     className={`px-2 py-1 rounded text-sm font-medium border transition-colors select-none ${
       active
@@ -18,11 +21,11 @@ const ToolBtn = ({ active, onClick, title, children, disabled }) => (
         : "bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700 disabled:opacity-40"
     }`}
   >
-    {children}
+    <span aria-hidden="true">{children}</span>
   </button>
 );
 
-const Divider = () => <span className="w-px h-5 bg-gray-300 mx-0.5 self-center" />;
+const Divider = () => <span aria-hidden="true" className="w-px h-5 bg-gray-300 mx-0.5 self-center" />;
 
 export default function RichTextEditor({ value, onChange, minHeight = 200, uploadImageFn }) {
   const imgInputRef = useRef(null);
@@ -82,7 +85,11 @@ export default function RichTextEditor({ value, onChange, minHeight = 200, uploa
   return (
     <div className="border border-gray-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-400 focus-within:border-primary-400">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50">
+      <div
+        role="toolbar"
+        aria-label="Text formatting"
+        className="flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50"
+      >
         {/* History */}
         <ToolBtn title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>↩</ToolBtn>
         <ToolBtn title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>↪</ToolBtn>
@@ -132,13 +139,14 @@ export default function RichTextEditor({ value, onChange, minHeight = 200, uploa
         <button
           type="button"
           title="Upload image from file"
+          aria-label="Upload image from file"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => imgInputRef.current?.click()}
           className="px-2 py-1 rounded text-sm font-medium border transition-colors bg-white text-gray-700 border-gray-300 hover:border-primary-400 hover:text-primary-700 cursor-pointer select-none"
         >
-          📷
+          <span aria-hidden="true">📷</span>
         </button>
-        <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+        <input ref={imgInputRef} type="file" accept="image/*" className="sr-only" aria-hidden="true" tabIndex={-1} onChange={handleImageFile} />
         <Divider />
 
         {/* Clear */}
@@ -149,6 +157,8 @@ export default function RichTextEditor({ value, onChange, minHeight = 200, uploa
       <EditorContent
         editor={editor}
         style={{ minHeight }}
+        aria-label="Rich text editor"
+        aria-multiline="true"
         className={`
           prose prose-sm max-w-none p-4 text-gray-900
           [&_.ProseMirror]:outline-none

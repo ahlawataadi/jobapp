@@ -40,32 +40,38 @@ export default function Register() {
             {error}
           </p>
         )}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Full name</label>
+            <label htmlFor="reg-name" className="block text-sm font-semibold text-gray-700 mb-1">Full name</label>
             <input
+              id="reg-name"
               placeholder="Your name"
               required
+              autoComplete="name"
               className={inputCls}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+            <label htmlFor="reg-email" className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
             <input
+              id="reg-email"
               type="email"
               placeholder="you@example.com"
               required
+              autoComplete="email"
               className={inputCls}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
+            <label htmlFor="reg-phone" className="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
             <input
+              id="reg-phone"
               placeholder="10-digit mobile number"
+              autoComplete="tel"
               className={inputCls}
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -101,12 +107,14 @@ export default function Register() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+            <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
             <input
+              id="reg-password"
               type="password"
               placeholder="At least 6 characters"
               required
               minLength={6}
+              autoComplete="new-password"
               className={inputCls}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -141,6 +149,8 @@ export default function Register() {
           </div>
           <button
             disabled={loading}
+            aria-disabled={loading}
+            aria-busy={loading}
             className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-2.5 rounded-lg font-semibold transition-colors"
           >
             {loading ? "Creating account..." : "Sign up"}

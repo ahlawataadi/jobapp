@@ -51,13 +51,15 @@ export default function Login() {
             {error}
           </p>
         )}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+            <label htmlFor="login-email" className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
             <input
+              id="login-email"
               type="email"
               placeholder="you@example.com"
               required
+              autoComplete="email"
               className={inputCls}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -65,15 +67,17 @@ export default function Login() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-semibold text-gray-700">Password</label>
+              <label htmlFor="login-password" className="block text-sm font-semibold text-gray-700">Password</label>
               <Link to="/forgot-password" className="text-xs text-primary-700 hover:underline font-medium">
                 Forgot password?
               </Link>
             </div>
             <input
+              id="login-password"
               type="password"
               placeholder="••••••••"
               required
+              autoComplete="current-password"
               className={inputCls}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -81,6 +85,8 @@ export default function Login() {
           </div>
           <button
             disabled={loading}
+            aria-disabled={loading}
+            aria-busy={loading}
             className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-2.5 rounded-lg font-semibold transition-colors"
           >
             {loading ? "Logging in..." : "Log in"}

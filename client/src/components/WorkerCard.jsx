@@ -14,22 +14,34 @@ export default function WorkerCard({ worker }) {
   const wp = worker.workerProfile || {};
   const initials = (worker.name || "?")[0].toUpperCase();
   const pay = formatWorkerPay(wp);
+  const skill = categoryLabel(wp.skillCategory);
+  const district = wp.location?.district;
+
+  const cardLabel = [
+    worker.name,
+    skill,
+    district,
+    wp.verificationBadge ? "Verified" : null,
+    wp.featured ? "Featured" : null,
+    pay,
+  ].filter(Boolean).join(", ");
 
   return (
     <Link
       to={`/workers/${worker._id}`}
       className="bg-white border border-gray-200 rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex gap-3"
+      aria-label={cardLabel}
     >
       <div className="shrink-0">
         {worker.avatarUrl ? (
-          <img src={worker.avatarUrl} alt={worker.name} className="w-12 h-12 rounded-full object-cover" />
+          <img src={worker.avatarUrl} alt="" aria-hidden="true" className="w-12 h-12 rounded-full object-cover" />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 font-bold text-lg flex items-center justify-center">
+          <div aria-hidden="true" className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 font-bold text-lg flex items-center justify-center">
             {initials}
           </div>
         )}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0" aria-hidden="true">
         <div className="flex items-start justify-between gap-2">
           <p className="font-semibold text-gray-900 truncate">{worker.name}</p>
           <div className="flex gap-1 shrink-0">
@@ -42,8 +54,7 @@ export default function WorkerCard({ worker }) {
           </div>
         </div>
         <p className="text-sm text-gray-500 mt-0.5">
-          {categoryLabel(wp.skillCategory)}
-          {wp.location?.district ? ` · ${wp.location.district}` : ""}
+          {skill}{district ? ` · ${district}` : ""}
         </p>
         {wp.skills?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
