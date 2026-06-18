@@ -424,6 +424,9 @@ export const jobsApi = createApi({
       query: (formData) => ({ url: "/admin/branding/privacy-image", method: "POST", body: formData }),
       invalidatesTags: ["AdminConfig"],
     }),
+    uploadEditorImage: builder.mutation({
+      query: (formData) => ({ url: "/admin/branding/editor-image", method: "POST", body: formData }),
+    }),
   }),
 });
 
@@ -526,4 +529,5 @@ export const {
   useUploadContactImageMutation,
   useUploadTermsImageMutation,
   useUploadPrivacyImageMutation,
+  useUploadEditorImageMutation,
 } = jobsApi;

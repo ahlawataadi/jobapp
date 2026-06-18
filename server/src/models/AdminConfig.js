@@ -80,6 +80,9 @@ const adminConfigSchema = new mongoose.Schema({
   featuredWorkerFee: {
     pricePerWeek: { type: Number, default: 99 },
   },
+  featuredVendorFee: {
+    pricePerWeek: { type: Number, default: 199 },
+  },
 });
 
 export const getConfig = async () => {

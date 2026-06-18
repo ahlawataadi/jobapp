@@ -51,6 +51,7 @@ export const getAdminConfig = async (req, res, next) => {
         privacyContent: config.privacyContent || "",
         privacyImage: config.privacyImage || "",
         featuredWorkerFee: config.featuredWorkerFee,
+        featuredVendorFee: config.featuredVendorFee,
       },
     });
   } catch (err) {
@@ -89,7 +90,7 @@ export const updateAdminConfig = async (req, res, next) => {
     if (typeof googleMapsApiKey === "string") config.googleMapsApiKey = googleMapsApiKey;
 
     // Fee / pricing updates
-    const { contactPacks, subscriptionPlans, seekerPlans, vendorPlans, featuredWorkerFee } = req.body;
+    const { contactPacks, subscriptionPlans, seekerPlans, vendorPlans, featuredWorkerFee, featuredVendorFee } = req.body;
     if (contactPacks && typeof contactPacks === "object") {
       const cp = config.contactPacks || {};
       for (const tier of ["starter", "standard", "pro"]) {
@@ -112,6 +113,9 @@ export const updateAdminConfig = async (req, res, next) => {
     }
     if (featuredWorkerFee && typeof featuredWorkerFee.pricePerWeek === "number") {
       config.featuredWorkerFee = { pricePerWeek: featuredWorkerFee.pricePerWeek };
+    }
+    if (featuredVendorFee && typeof featuredVendorFee.pricePerWeek === "number") {
+      config.featuredVendorFee = { pricePerWeek: featuredVendorFee.pricePerWeek };
     }
 
     for (const [key, incoming] of [["seekerPlans", seekerPlans], ["vendorPlans", vendorPlans]]) {
@@ -784,6 +788,15 @@ export const uploadPrivacyImage = async (req, res, next) => {
     config.privacyImage = `/uploads/branding/${req.file.filename}`;
     await config.save();
     res.json({ imageUrl: config.privacyImage });
+  } catch (err) { next(err); }
+};
+
+// POST /api/admin/branding/editor-image — inline image upload for the rich text editor.
+// Returns a served URL so editor content stores a small link instead of a giant base64 blob.
+export const uploadEditorImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    res.json({ url: `/uploads/branding/${req.file.filename}` });
   } catch (err) { next(err); }
 };
 
