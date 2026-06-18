@@ -10,10 +10,12 @@ export const listWorkers = async (req, res, next) => {
     const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 50);
     const lim = Math.min(Number(limit) || 20, 50);
 
+    // List all active seekers in the worker directory. A skill category is no
+    // longer required — registered seekers appear even before they complete
+    // their profile (it's only enforced when the user filters by a category).
     const filter = {
       role: "seeker",
       status: { $ne: "suspended" },
-      "workerProfile.skillCategory": { $exists: true, $ne: null },
     };
 
     if (category && CATEGORY_ENUM.includes(category)) {
