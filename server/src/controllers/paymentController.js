@@ -17,6 +17,13 @@ const getRazorpay = (keys) =>
     key_secret: keys.keySecret,
   });
 
+// Treat empty OR placeholder values (e.g. the "rzp_test_xxxxxxxx" defaults from
+// .env.example) as "not configured", so we fail fast with a clear message
+// instead of letting the Razorpay SDK throw a 500.
+const isPlaceholder = (v) => !v || /x{4,}/i.test(v);
+const gatewayReady = (keys) => !isPlaceholder(keys.keyId) && !isPlaceholder(keys.keySecret);
+const GATEWAY_NOT_CONFIGURED = "Online payments are not configured yet. Add valid Razorpay API keys in Admin → Settings → Payment gateway (or RAZORPAY_* env vars).";
+
 // POST /api/payments/create-order
 export const createOrder = async (req, res, next) => {
   try {
@@ -37,13 +44,22 @@ export const createOrder = async (req, res, next) => {
     }
 
     const keys = getGatewayKeys(config);
+    if (!gatewayReady(keys)) {
+      return res.status(503).json({ message: GATEWAY_NOT_CONFIGURED });
+    }
     const razorpay = getRazorpay(keys);
-    const order = await razorpay.orders.create({
-      amount,
-      currency: "INR",
-      receipt: `vendor_${vendor._id}`,
-      notes: { vendorId: vendor._id.toString() },
-    });
+    let order;
+    try {
+      order = await razorpay.orders.create({
+        amount,
+        currency: "INR",
+        receipt: `vendor_${vendor._id}`,
+        notes: { vendorId: vendor._id.toString() },
+      });
+    } catch (gwErr) {
+      const detail = gwErr?.error?.description || gwErr?.message || "request rejected";
+      return res.status(502).json({ message: `Payment gateway error: ${detail}` });
+    }
 
     await Payment.create({
       vendorId: vendor._id,
@@ -132,14 +148,23 @@ export const createSubscriptionOrder = async (req, res, next) => {
 
     const amountPaise = Math.round(planConfig.priceMonthly * 100);
     const keys = getGatewayKeys(config);
+    if (!gatewayReady(keys)) {
+      return res.status(503).json({ message: GATEWAY_NOT_CONFIGURED });
+    }
     const razorpay = getRazorpay(keys);
 
-    const order = await razorpay.orders.create({
-      amount: amountPaise,
-      currency: "INR",
-      receipt: `sub_${req.user._id}_${Date.now()}`,
-      notes: { userId: req.user._id.toString(), plan },
-    });
+    let order;
+    try {
+      order = await razorpay.orders.create({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `sub_${req.user._id}_${Date.now()}`,
+        notes: { userId: req.user._id.toString(), plan },
+      });
+    } catch (gwErr) {
+      const detail = gwErr?.error?.description || gwErr?.message || "request rejected";
+      return res.status(502).json({ message: `Payment gateway error: ${detail}` });
+    }
 
     await Payment.create({
       type: "subscription",
