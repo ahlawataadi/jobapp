@@ -7,7 +7,8 @@ const CONTACT_PATTERNS = [
   /\b\d{10,12}\b/g,                                          // generic 10-12 digit numbers
   /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g, // emails
   /\bwhatsapp\.com\/[^\s]*/gi,                               // WhatsApp links
-  /\bt\.me\/[^\s]*/gi,                                       // Telegram links
+  /\bwa\.me\/[^\s]*/gi,                                      // WhatsApp short links
+  /\b(?:t|telegram)\.me\/[^\s]*/gi,                          // Telegram links
 ];
 
 function sanitize(text) {
