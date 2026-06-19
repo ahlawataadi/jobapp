@@ -158,7 +158,8 @@ export const createSubscriptionOrder = async (req, res, next) => {
       order = await razorpay.orders.create({
         amount: amountPaise,
         currency: "INR",
-        receipt: `sub_${req.user._id}_${Date.now()}`,
+        // Razorpay caps receipt at 40 chars; full userId is in notes below.
+        receipt: `sub_${req.user._id.toString().slice(-6)}_${Date.now()}`,
         notes: { userId: req.user._id.toString(), plan },
       });
     } catch (gwErr) {
