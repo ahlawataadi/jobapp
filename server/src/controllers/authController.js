@@ -23,8 +23,12 @@ const REFRESH_COOKIE = "jobapp_refresh";
 
 const cookieOptions = () => ({
   httpOnly: true,
+  // In production the SPA and API are on different sites (e.g. separate Render
+  // services on *.onrender.com, a public suffix → cross-site). Cross-site
+  // cookies must be SameSite=None + Secure, or the browser won't send the
+  // refresh cookie back to /auth/refresh and the user is logged out on refresh.
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/api/auth",
 });
@@ -195,7 +199,11 @@ export const refresh = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    res.clearCookie(REFRESH_COOKIE, { path: "/api/auth" });
+    res.clearCookie(REFRESH_COOKIE, {
+      path: "/api/auth",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
     res.json({ message: "Logged out" });
   } catch (err) {
     next(err);
