@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/axios.js";
+import { useGetAdminConfigQuery } from "../store/jobsApi.js";
 
 const inputCls =
   "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
 
 export default function Register() {
+  const { data: configData } = useGetAdminConfigQuery();
+  const siteName = configData?.config?.siteName || "Haryana Job Marketplace";
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "seeker", channel: "email" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +36,7 @@ export default function Register() {
             H
           </span>
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
-          <p className="text-sm text-gray-500 mt-1">Join Haryana Job Marketplace today</p>
+          <p className="text-sm text-gray-500 mt-1">Join {siteName} today</p>
         </div>
         {error && (
           <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
