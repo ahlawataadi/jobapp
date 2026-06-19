@@ -3,6 +3,10 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   user: null,
   accessToken: null,
+  // false until the initial silent /auth/refresh attempt finishes on app load.
+  // Guards ProtectedRoute from redirecting to /login before the session is
+  // restored on a hard refresh.
+  authReady: false,
 };
 
 const authSlice = createSlice({
@@ -12,6 +16,7 @@ const authSlice = createSlice({
     setCredentials: (state, action) => {
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
+      state.authReady = true;
     },
     setAccessToken: (state, action) => {
       state.accessToken = action.payload;
@@ -19,6 +24,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
+      state.authReady = true;
     },
   },
 });
