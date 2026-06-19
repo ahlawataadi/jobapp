@@ -179,33 +179,39 @@ export const unlockWorkerContact = async (req, res, next) => {
   }
 };
 
-// POST /api/workers/:id/contact-packs/buy — purchase contact credits
+// POST /api/workers/contact-packs/buy — DEPRECATED.
+// Credits used to be granted here for free, which let vendors mint unlimited
+// unlocks. Purchasing now goes through the paid Razorpay flow:
+//   POST /api/payments/contact-pack/create-order  → pay → /verify
 export const buyContactPack = async (req, res, next) => {
+  return res.status(410).json({
+    message: "This endpoint is deprecated. Use /api/payments/contact-pack/create-order to purchase credits.",
+  });
+};
+
+// POST /api/workers/me/resume — upload a resume (pdf/doc/docx)
+export const uploadResume = async (req, res, next) => {
   try {
-    if (req.user.role !== "vendor") {
-      return res.status(403).json({ message: "Only vendors can purchase contact packs" });
-    }
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!req.file) return res.status(400).json({ message: "No resume file uploaded" });
 
-    const PACKS = {
-      starter: { credits: 10, priceRs: 49 },
-      standard: { credits: 25, priceRs: 199 },
-      pro: { credits: 40, priceRs: 499 },
-    };
+    user.workerProfile.resumeUrl = await persistUpload(req.file, "resumes");
+    await user.save();
+    res.json({ resumeUrl: user.workerProfile.resumeUrl });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const { pack } = req.body;
-    if (!PACKS[pack]) {
-      return res.status(400).json({ message: `Invalid pack. Choose: ${Object.keys(PACKS).join(", ")}` });
-    }
-
-    const vendorUser = await User.findById(req.user._id);
-    vendorUser.contactCredits += PACKS[pack].credits;
-    await vendorUser.save();
-
-    res.json({
-      message: `Added ${PACKS[pack].credits} credits.`,
-      contactCredits: vendorUser.contactCredits,
-      pack: PACKS[pack],
-    });
+// DELETE /api/workers/me/resume
+export const removeResume = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.workerProfile.resumeUrl = "";
+    await user.save();
+    res.json({ resumeUrl: "" });
   } catch (err) {
     next(err);
   }

@@ -4,9 +4,22 @@ import { useSelector } from "react-redux";
 import {
   useGetWorkerQuery,
   useUnlockWorkerContactMutation,
-  useBuyContactPackMutation,
+  useCreateContactPackOrderMutation,
+  useVerifyContactPackPurchaseMutation,
+  useGetAdminConfigQuery,
 } from "../store/jobsApi.js";
 import { categoryLabel } from "../constants/categories.js";
+
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
 
 const PAY_SUFFIX = { hourly: "/hr", daily: "/day", monthly: "/mo", fixed: "" };
 
@@ -20,19 +33,30 @@ function formatRate(wp) {
   return null;
 }
 
-const PACKS = [
-  { key: "starter", credits: 10, price: "₹49" },
-  { key: "standard", credits: 25, price: "₹199" },
-  { key: "pro", credits: 40, price: "₹499" },
-];
+// Fallback prices/credits if the admin config hasn't loaded yet.
+const DEFAULT_PACKS = {
+  starter: { credits: 10, price: 49 },
+  standard: { credits: 25, price: 199 },
+  pro: { credits: 40, price: 499 },
+};
 
 export default function WorkerPublicProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
   const { data, isLoading, refetch } = useGetWorkerQuery(id, { skip: !user });
+  const { data: configData } = useGetAdminConfigQuery();
   const [unlock, { isLoading: unlocking }] = useUnlockWorkerContactMutation();
-  const [buyPack, { isLoading: buying }] = useBuyContactPackMutation();
+  const [createPackOrder] = useCreateContactPackOrderMutation();
+  const [verifyPackPurchase] = useVerifyContactPackPurchaseMutation();
+  const [buying, setBuying] = useState(false);
+
+  // Contact-pack prices/credits come from admin Fees & Pricing, not hardcoded.
+  const cfgPacks = configData?.config?.contactPacks;
+  const packs = ["starter", "standard", "pro"].map((key) => {
+    const p = cfgPacks?.[key] || DEFAULT_PACKS[key];
+    return { key, credits: p.credits, price: `₹${Number(p.price).toLocaleString("en-IN")}` };
+  });
   const [showPackModal, setShowPackModal] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -81,12 +105,36 @@ export default function WorkerPublicProfile() {
   };
 
   const handleBuyPack = async (packKey) => {
+    setMsg("");
+    setBuying(true);
     try {
-      const res = await buyPack({ pack: packKey }).unwrap();
-      setShowPackModal(false);
-      setMsg(`${res.message} You now have ${res.contactCredits} credits.`);
+      const ok = await loadRazorpayScript();
+      if (!ok) throw new Error("Failed to load payment checkout");
+
+      const order = await createPackOrder({ pack: packKey }).unwrap();
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: configData?.config?.siteName || "Haryana Job Marketplace",
+        description: `Contact credits — ${packKey} pack`,
+        order_id: order.orderId,
+        handler: async (response) => {
+          try {
+            const res = await verifyPackPurchase(response).unwrap();
+            setShowPackModal(false);
+            setMsg(`Added ${res.creditsAdded} credits. You now have ${res.contactCredits}.`);
+          } catch (e) {
+            setMsg(e?.data?.message || "Payment verification failed");
+          }
+        },
+        theme: { color: "#1d4ed8" },
+      });
+      rzp.open();
     } catch (e) {
-      setMsg(e?.data?.message || "Purchase failed");
+      setMsg(e?.data?.message || e.message || "Purchase failed");
+    } finally {
+      setBuying(false);
     }
   };
 
@@ -216,7 +264,7 @@ export default function WorkerPublicProfile() {
             <h2 className="font-bold text-gray-900 text-lg">Purchase Contact Pack</h2>
             <p className="text-sm text-gray-600">You have no credits. Buy a pack to unlock worker contacts.</p>
             <div className="space-y-3">
-              {PACKS.map((p) => (
+              {packs.map((p) => (
                 <button
                   key={p.key}
                   onClick={() => handleBuyPack(p.key)}

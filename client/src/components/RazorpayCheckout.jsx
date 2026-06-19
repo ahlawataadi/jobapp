@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateOrderMutation, useVerifyPaymentMutation } from "../store/jobsApi.js";
+import { useCreateOrderMutation, useVerifyPaymentMutation, useGetAdminConfigQuery } from "../store/jobsApi.js";
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -15,6 +15,8 @@ function loadRazorpayScript() {
 export default function RazorpayCheckout({ onSuccess }) {
   const [createOrder] = useCreateOrderMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+  const { data: configData } = useGetAdminConfigQuery();
+  const siteName = configData?.config?.siteName || "Haryana Job Marketplace";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +33,7 @@ export default function RazorpayCheckout({ onSuccess }) {
         key: order.keyId,
         amount: order.amount,
         currency: order.currency,
-        name: "Haryana Job Marketplace",
+        name: siteName,
         description: "Vendor signup fee",
         order_id: order.orderId,
         handler: async (response) => {

@@ -1,5 +1,7 @@
 import Application from "../models/Application.js";
 import Job from "../models/Job.js";
+import Vendor from "../models/Vendor.js";
+import User from "../models/User.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
 import { sendMail } from "../utils/mailer.js";
 
@@ -12,7 +14,8 @@ export const applyToJob = async (req, res, next) => {
     const application = await Application.create({
       jobId: job._id,
       userId: req.user._id,
-      resumeUrl: req.body.resumeUrl,
+      // Fall back to the resume saved on the seeker's profile.
+      resumeUrl: req.body.resumeUrl || req.user.workerProfile?.resumeUrl || "",
       coverNote: req.body.coverNote,
     });
 
@@ -22,6 +25,20 @@ export const applyToJob = async (req, res, next) => {
       jobTitle: job.title,
       userId: req.user._id,
     });
+
+    // Notify the employer that a new application arrived (best-effort).
+    try {
+      const vendor = await Vendor.findById(job.vendorId).select("userId orgName");
+      const vendorUser = vendor && (await User.findById(vendor.userId).select("email name"));
+      if (vendorUser?.email) {
+        sendMail({
+          to: vendorUser.email,
+          subject: `New application for ${job.title}`,
+          html: `<p>Hi ${vendorUser.name || ""},</p><p><strong>${req.user.name || "A candidate"}</strong> just applied for <strong>${job.title}</strong>.</p><p>Log in to your dashboard to review the application.</p>`,
+        });
+      }
+    } catch { /* email is best-effort; never block the application */ }
+
     res.status(201).json({ application });
   } catch (err) {
     if (err.code === 11000) {

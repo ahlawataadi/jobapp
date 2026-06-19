@@ -20,6 +20,7 @@ const Compare = lazy(() => import("./pages/Compare.jsx"));
 const VendorOnboard = lazy(() => import("./pages/VendorOnboard.jsx"));
 const VendorDashboard = lazy(() => import("./pages/VendorDashboard.jsx"));
 const MyApplications = lazy(() => import("./pages/MyApplications.jsx"));
+const SavedJobs = lazy(() => import("./pages/SavedJobs.jsx"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout.jsx"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel.jsx"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics.jsx"));
@@ -204,6 +205,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={["seeker", "vendor"]}>
               <MyApplications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved"
+          element={
+            <ProtectedRoute>
+              <SavedJobs />
             </ProtectedRoute>
           }
         />

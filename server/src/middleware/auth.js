@@ -9,7 +9,9 @@ export const requireAuth = async (req, res, next) => {
     if (!token) return res.status(401).json({ message: "Not authenticated" });
 
     const payload = verifyAccessToken(token);
-    const user = await User.findById(payload.sub);
+    // Exclude the password hash from the request-scoped user. Handlers that need
+    // it (e.g. password change) re-fetch the full document explicitly.
+    const user = await User.findById(payload.sub).select("-passwordHash");
     if (!user) return res.status(401).json({ message: "User not found" });
 
     req.user = user;

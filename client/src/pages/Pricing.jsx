@@ -48,6 +48,8 @@ function PlanCard({ planKey, plan, currentPlan, siteName, razorpayKeyId, onSucce
   const [success, setSuccess] = useState("");
   const meta = PLAN_META[planKey];
   const isCurrent = currentPlan === planKey;
+  // Admin-configured override (Fees & Pricing → Button label); falls back to defaults.
+  const customLabel = plan?.buttonLabel?.trim();
 
   const handleSubscribe = async () => {
     setError("");
@@ -133,7 +135,7 @@ function PlanCard({ planKey, plan, currentPlan, siteName, razorpayKeyId, onSucce
                 : "bg-gray-900 hover:bg-gray-800 text-white"
             }`}
           >
-            {loading ? "Processing…" : `Subscribe — ₹${plan.priceMonthly?.toLocaleString("en-IN")}/mo`}
+            {loading ? "Processing…" : customLabel || `Subscribe — ₹${plan.priceMonthly?.toLocaleString("en-IN")}/mo`}
           </button>
         )
       ) : (
@@ -145,7 +147,7 @@ function PlanCard({ planKey, plan, currentPlan, siteName, razorpayKeyId, onSucce
               : "bg-gray-900 hover:bg-gray-800 text-white"
           }`}
         >
-          Log in to subscribe
+          {customLabel || "Log in to subscribe"}
         </Link>
       )}
     </div>

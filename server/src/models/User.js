@@ -15,6 +15,7 @@ const workerProfileSchema = new mongoose.Schema(
     payPreference: { type: String, enum: ["hourly", "daily", "monthly", "fixed"], default: "daily" },
     voiceProfileUrl: { type: String, default: "" },    // uploaded voice intro
     profileVideoUrl: { type: String, default: "" },    // short intro video (premium)
+    resumeUrl: { type: String, default: "" },          // uploaded resume (pdf/doc)
     location: {
       district: { type: String, default: "" },
       city: { type: String, default: "" },
@@ -55,6 +56,9 @@ const userSchema = new mongoose.Schema(
     // Seeker/worker profile (populated when role === "seeker")
     workerProfile: { type: workerProfileSchema, default: () => ({}) },
 
+    // Seeker: bookmarked jobs
+    savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job", index: true }],
+
     // Vendor: contact credits for unlocking worker contact details
     contactCredits: { type: Number, default: 0, min: 0 },
 
@@ -90,6 +94,7 @@ userSchema.methods.toSafeJSON = function () {
     avatarUrl: this.avatarUrl,
     isVerified: this.isVerified,
     workerProfile: this.workerProfile,
+    savedJobs: this.savedJobs,
     contactCredits: this.contactCredits,
     subscription: this.subscription,
   };

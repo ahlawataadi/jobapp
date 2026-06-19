@@ -1,5 +1,6 @@
 import Job from "../models/Job.js";
 import Vendor from "../models/Vendor.js";
+import User from "../models/User.js";
 import { dispatchWebhook } from "../utils/webhooks.js";
 import { parseCsv } from "../utils/csv.js";
 
@@ -311,6 +312,46 @@ export const compareJobs = async (req, res, next) => {
       "orgName district avgRating industry"
     );
     res.json({ jobs, vendors });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/jobs/saved/me — the current user's bookmarked jobs (with vendor summary)
+export const listSavedJobs = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select("savedJobs");
+    const ids = user?.savedJobs || [];
+    const jobs = await Job.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).lean();
+    const vendors = await Vendor.find({ _id: { $in: jobs.map((j) => j.vendorId) } })
+      .select("orgName district avgRating logoUrl")
+      .lean();
+    const vmap = Object.fromEntries(vendors.map((v) => [String(v._id), v]));
+    const items = jobs.map((j) => ({ ...j, vendorSummary: vmap[String(j.vendorId)] || null }));
+    res.json({ items, total: items.length });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/jobs/:id/save — bookmark a job
+export const saveJob = async (req, res, next) => {
+  try {
+    const job = await Job.findById(req.params.id).select("_id");
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    // $addToSet keeps it idempotent (no duplicates).
+    await User.updateOne({ _id: req.user._id }, { $addToSet: { savedJobs: job._id } });
+    res.json({ saved: true, jobId: job._id });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/jobs/:id/save — remove a bookmark
+export const unsaveJob = async (req, res, next) => {
+  try {
+    await User.updateOne({ _id: req.user._id }, { $pull: { savedJobs: req.params.id } });
+    res.json({ saved: false, jobId: req.params.id });
   } catch (err) {
     next(err);
   }

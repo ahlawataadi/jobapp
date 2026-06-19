@@ -13,7 +13,7 @@ const baseQuery = fetchBaseQuery({
 export const jobsApi = createApi({
   reducerPath: "jobsApi",
   baseQuery,
-  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast", "Blog", "Worker", "Chat"],
+  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast", "Blog", "Worker", "Chat", "SavedJob"],
   endpoints: (builder) => ({
     getJobs: builder.query({
       query: (params) => ({ url: "/jobs", params }),
@@ -36,6 +36,18 @@ export const jobsApi = createApi({
     applyToJob: builder.mutation({
       query: ({ id, ...body }) => ({ url: `/jobs/${id}/apply`, method: "POST", body }),
       invalidatesTags: ["Application"],
+    }),
+    getSavedJobs: builder.query({
+      query: () => "/jobs/saved/me",
+      providesTags: ["SavedJob"],
+    }),
+    saveJob: builder.mutation({
+      query: (id) => ({ url: `/jobs/${id}/save`, method: "POST" }),
+      invalidatesTags: ["SavedJob", "Me"],
+    }),
+    unsaveJob: builder.mutation({
+      query: (id) => ({ url: `/jobs/${id}/save`, method: "DELETE" }),
+      invalidatesTags: ["SavedJob", "Me"],
     }),
     myApplications: builder.query({
       query: () => "/applications/mine",
@@ -302,8 +314,11 @@ export const jobsApi = createApi({
       query: (id) => ({ url: `/workers/${id}/unlock`, method: "POST" }),
       invalidatesTags: (r, e, id) => [{ type: "Worker", id }, "Me"],
     }),
-    buyContactPack: builder.mutation({
-      query: (body) => ({ url: "/workers/contact-packs/buy", method: "POST", body }),
+    createContactPackOrder: builder.mutation({
+      query: (body) => ({ url: "/payments/contact-pack/create-order", method: "POST", body }),
+    }),
+    verifyContactPackPurchase: builder.mutation({
+      query: (body) => ({ url: "/payments/contact-pack/verify", method: "POST", body }),
       invalidatesTags: ["Me"],
     }),
     adminVerifyWorker: builder.mutation({
@@ -317,6 +332,14 @@ export const jobsApi = createApi({
     removeWorkerVideo: builder.mutation({
       query: () => ({ url: "/workers/me/video", method: "DELETE" }),
       invalidatesTags: ["Worker"],
+    }),
+    uploadResume: builder.mutation({
+      query: (formData) => ({ url: "/workers/me/resume", method: "POST", body: formData }),
+      invalidatesTags: ["Me", "Worker"],
+    }),
+    removeResume: builder.mutation({
+      query: () => ({ url: "/workers/me/resume", method: "DELETE" }),
+      invalidatesTags: ["Me", "Worker"],
     }),
     uploadVendorVideo: builder.mutation({
       query: (formData) => ({ url: "/vendors/me/video", method: "POST", body: formData }),
@@ -437,6 +460,9 @@ export const {
   useSuggestJobsQuery,
   useDistrictStatsQuery,
   useApplyToJobMutation,
+  useGetSavedJobsQuery,
+  useSaveJobMutation,
+  useUnsaveJobMutation,
   useMyApplicationsQuery,
   useMyJobsQuery,
   useCreateJobMutation,
@@ -508,7 +534,8 @@ export const {
   useGetWorkerQuery,
   useUpdateMyWorkerProfileMutation,
   useUnlockWorkerContactMutation,
-  useBuyContactPackMutation,
+  useCreateContactPackOrderMutation,
+  useVerifyContactPackPurchaseMutation,
   useAdminVerifyWorkerMutation,
   useListConversationsQuery,
   useGetConversationQuery,
@@ -520,6 +547,8 @@ export const {
   useSetUserSubscriptionMutation,
   useUploadWorkerVideoMutation,
   useRemoveWorkerVideoMutation,
+  useUploadResumeMutation,
+  useRemoveResumeMutation,
   useUploadVendorVideoMutation,
   useRemoveVendorVideoMutation,
   useAddVendorBusinessMutation,
