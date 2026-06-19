@@ -88,7 +88,7 @@
 | Pages editor (About/Contact/Terms/Privacy) with images | ✅ | Rich text editor with image upload |
 | Broadcast email / SMS to audiences | ✅ | |
 | Webhooks (outbound integrations) | ✅ | Create/test/delete |
-| Settings: branding/SEO, OTP, Google Maps, SMTP, SMS, payment gateway, **S3 storage** | ✅ | Runtime config in DB |
+| Settings: branding/SEO, OTP, Google Maps, SMTP, SMS, payment gateway, **R2 storage** | ✅ | Runtime config in DB |
 | Import users/vendors/jobs (CSV) | ✅ | |
 | Activity logs | ✅ | |
 
@@ -96,7 +96,7 @@
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| File storage: local disk or S3 (runtime-switchable) | ✅ | Admin panel or env; see S3_SETUP.md |
+| File storage: local disk or Cloudflare R2 (runtime-switchable) | ✅ | Admin panel or env; see R2_SETUP.md |
 | Payments: Razorpay orders + HMAC verify + webhook | ✅ | Webhook is source of truth |
 | Email (SMTP) & SMS (Twilio / HTTP gateway) | ✅ | Configurable |
 | Reviews & ratings for vendors | ✅ | |
