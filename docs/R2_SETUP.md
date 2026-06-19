@@ -78,8 +78,8 @@ R2_SECRET_ACCESS_KEY=...your R2 secret...
 R2_PUBLIC_URL=https://pub-xxxx.r2.dev
 ```
 
-The AWS SDK (`@aws-sdk/client-s3`) is already a dependency and works with R2 —
-nothing to install.
+No SDK or extra dependency is needed — R2 is called directly over HTTPS with
+AWS SigV4 request signing (Node's built-in `crypto` + `fetch`).
 
 ## Step 6 — Verify
 
@@ -100,9 +100,9 @@ takes uploads down, it just falls back.
 - `server/src/utils/storage.js` exposes `persistUpload(file, subdir)`.
 - All upload controllers call it after Multer writes the temp file to disk.
 - **Local mode:** returns `/uploads/<subdir>/<filename>` (served by Express).
-- **R2 mode:** uploads to `<subdir>/<filename>` via the S3 SDK pointed at the R2
-  endpoint (`region: "auto"`), deletes the local temp copy, and returns the
-  public URL (`<publicUrl>/<subdir>/<filename>`).
+- **R2 mode:** PUTs to `<subdir>/<filename>` on the R2 S3-compatible endpoint
+  using a hand-signed AWS SigV4 request (no SDK), deletes the local temp copy,
+  and returns the public URL (`<publicUrl>/<subdir>/<filename>`).
 - Existing uploads created before enabling R2 keep their `/uploads/...` URLs. To
   migrate them, copy `server/uploads/**` into the bucket preserving the folder
   structure (e.g. with `rclone` or the `aws s3 sync` CLI pointed at the R2

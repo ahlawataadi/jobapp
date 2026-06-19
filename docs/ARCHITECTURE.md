@@ -48,7 +48,7 @@ graph TD
 | Client | React 18, Vite, React Router v6, Redux Toolkit + RTK Query, Tailwind CSS, TipTap (rich text), Recharts (admin analytics), DOMPurify |
 | Server | Node.js (ES modules), Express, Mongoose, JWT (`jsonwebtoken`), `bcryptjs`, `multer`, `express-rate-limit`, `helmet`, `morgan`, `node-cron` |
 | Data | MongoDB (Mongoose ODM) |
-| Storage | Local disk (`/uploads`) or Cloudflare R2 (S3-compatible, via `@aws-sdk/client-s3`) in `utils/storage.js` |
+| Storage | Local disk (`/uploads`) or Cloudflare R2 (native AWS SigV4 over `fetch`, no SDK) in `utils/storage.js` |
 | Payments | Razorpay (orders + HMAC signature verification + webhook) |
 | Messaging | Nodemailer (SMTP), Twilio or generic HTTP SMS |
 | Infra/CI | GitHub Actions (build + syntax check) |

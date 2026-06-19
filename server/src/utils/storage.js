@@ -1,19 +1,20 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { getConfig } from "../models/AdminConfig.js";
 
 /**
  * Storage abstraction for uploaded files.
  *
  * By default files are kept on local disk and served from /uploads. When
- * Cloudflare R2 is configured the same files are pushed to the bucket and a
+ * Cloudflare R2 is configured the same files are uploaded to the bucket and a
  * public URL is returned instead, so the app can run on ephemeral /
  * multi-instance hosts without losing uploads.
  *
- * R2 is S3-API compatible, so we reuse @aws-sdk/client-s3 pointed at the R2
- * endpoint (region "auto"). Config comes from the Admin → Settings page
- * (AdminConfig.r2Storage); env vars (STORAGE_DRIVER=r2 + R2_*) are the fallback.
- * See docs/R2_SETUP.md.
+ * R2 is integrated natively over HTTPS with AWS SigV4 request signing (Node's
+ * built-in crypto + fetch) — no AWS SDK dependency. Config comes from the
+ * Admin → Settings page (AdminConfig.r2Storage); env vars (STORAGE_DRIVER=r2 +
+ * R2_*) are the fallback. See docs/R2_SETUP.md.
  */
 
 // Resolve effective R2 settings: admin-panel values take precedence, env is the
@@ -32,38 +33,80 @@ async function resolveR2() {
 
   const accountId = db.accountId || process.env.R2_ACCOUNT_ID;
   const bucket = db.bucket || process.env.R2_BUCKET;
-  if (!accountId || !bucket) return null;
+  const accessKeyId = db.accessKeyId || process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = db.secretAccessKey || process.env.R2_SECRET_ACCESS_KEY;
+  if (!accountId || !bucket || !accessKeyId || !secretAccessKey) return null;
 
   return {
     accountId,
     bucket,
-    accessKeyId: db.accessKeyId || process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: db.secretAccessKey || process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId,
+    secretAccessKey,
     // Public bucket domain (r2.dev) or a custom domain. Required to build a
     // reachable URL — the S3 API endpoint itself is not publicly readable.
     publicUrl: db.publicUrl || process.env.R2_PUBLIC_URL || "",
   };
 }
 
-let _client = null;
-let _clientKey = null;
-async function getClient(r2) {
-  // Recreate the client if the configured account/keys changed at runtime.
-  const key = `${r2.accountId}:${r2.accessKeyId}`;
-  if (_client && _clientKey === key) return _client;
-  const { S3Client } = await import("@aws-sdk/client-s3");
-  _client = new S3Client({
-    region: "auto",
-    endpoint: `https://${r2.accountId}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId: r2.accessKeyId, secretAccessKey: r2.secretAccessKey },
+const sha256hex = (data) => crypto.createHash("sha256").update(data).digest("hex");
+const hmac = (key, data) => crypto.createHmac("sha256", key).update(data).digest();
+// Encode a key into a canonical URI path: encode each segment, keep the slashes.
+const encodeKey = (key) => key.split("/").map(encodeURIComponent).join("/");
+
+/**
+ * Upload an object to Cloudflare R2 via the S3-compatible REST API, signed with
+ * AWS Signature V4. No SDK — just crypto + fetch.
+ */
+async function r2PutObject(r2, key, body, contentType) {
+  const host = `${r2.accountId}.r2.cloudflarestorage.com`;
+  const region = "auto";
+  const service = "s3";
+
+  const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, ""); // YYYYMMDDTHHMMSSZ
+  const dateStamp = amzDate.slice(0, 8);
+  const canonicalUri = `/${r2.bucket}/${encodeKey(key)}`;
+  const payloadHash = sha256hex(body);
+
+  const canonicalHeaders =
+    `content-type:${contentType}\n` +
+    `host:${host}\n` +
+    `x-amz-content-sha256:${payloadHash}\n` +
+    `x-amz-date:${amzDate}\n`;
+  const signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date";
+
+  const canonicalRequest = ["PUT", canonicalUri, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const scope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256hex(canonicalRequest)].join("\n");
+
+  let signingKey = hmac(`AWS4${r2.secretAccessKey}`, dateStamp);
+  signingKey = hmac(signingKey, region);
+  signingKey = hmac(signingKey, service);
+  signingKey = hmac(signingKey, "aws4_request");
+  const signature = crypto.createHmac("sha256", signingKey).update(stringToSign).digest("hex");
+
+  const authorization =
+    `AWS4-HMAC-SHA256 Credential=${r2.accessKeyId}/${scope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(`https://${host}${canonicalUri}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+      "x-amz-content-sha256": payloadHash,
+      "x-amz-date": amzDate,
+      Authorization: authorization,
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+    body,
   });
-  _clientKey = key;
-  return _client;
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`R2 upload failed (${res.status}): ${text.slice(0, 300)}`);
+  }
 }
 
 function publicUrl(r2, key) {
-  // R2 buckets aren't public via the API endpoint — a configured r2.dev or
-  // custom domain is needed. Fall back to the dev endpoint path if unset.
   const base = r2.publicUrl
     ? r2.publicUrl.replace(/\/+$/, "")
     : `https://${r2.accountId}.r2.cloudflarestorage.com/${r2.bucket}`;
@@ -90,18 +133,10 @@ export async function persistUpload(file, subdir) {
   if (!r2) return localUrl;
 
   const key = `${subdir}/${file.filename}`;
-  const { PutObjectCommand } = await import("@aws-sdk/client-s3");
-  const client = await getClient(r2);
   const body = fs.readFileSync(file.path);
   const contentType = file.mimetype || MIME_BY_EXT[path.extname(file.filename).toLowerCase()] || "application/octet-stream";
 
-  await client.send(new PutObjectCommand({
-    Bucket: r2.bucket,
-    Key: key,
-    Body: body,
-    ContentType: contentType,
-    CacheControl: "public, max-age=31536000, immutable",
-  }));
+  await r2PutObject(r2, key, body, contentType);
 
   // Local copy was only a staging area; remove it to avoid filling the disk.
   fs.promises.unlink(file.path).catch(() => {});
