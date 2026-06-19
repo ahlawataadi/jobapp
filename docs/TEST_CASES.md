@@ -99,19 +99,19 @@ Suggested automation: API/integration via Jest/Vitest + Supertest against
 | ADM-03 | Suspend user | Admin | Suspend a user | User `status=suspended`; excluded from worker directory | P2 |
 | ADM-04 | Pages editor + image | Admin | Edit About, upload featured + inline image, save | Public page shows sanitized content + images | P1 |
 | ADM-05 | Generate blog (unique) | Admin | Click "Generate post" repeatedly | Each creates a unique slug (no overwrite) | P2 |
-| ADM-06 | Broadcast email/SMS | Admin | Send to an audience | Recipients receive; image URL absolute when on S3 | P2 |
+| ADM-06 | Broadcast email/SMS | Admin | Send to an audience | Recipients receive; image URL absolute when on R2 | P2 |
 | ADM-07 | CSV import | Admin | Import users/vendors/jobs CSV | Rows created; errors reported per row | P2 |
 | ADM-08 | Admin sees no subscription card | Admin on profile | Open profile | Subscription card hidden for admin | P3 |
-| ADM-09 | Integration settings save | Admin | Save SMTP/SMS/payment/S3 | Persisted; secrets never returned to public config | P1 |
+| ADM-09 | Integration settings save | Admin | Save SMTP/SMS/payment/R2 | Persisted; secrets never returned to public config | P1 |
 
-## 7. File storage (local ↔ S3)
+## 7. File storage (local ↔ R2)
 
 | ID | Title | Preconditions | Steps | Expected | Pri |
 |----|-------|---------------|-------|----------|-----|
-| STOR-01 | Local upload + serve | S3 disabled | Upload image | URL `/uploads/...`; fetch returns 200 image | P1 |
-| STOR-02 | S3 routing | S3 enabled (admin panel) w/ valid keys | Upload image | Absolute S3/CDN URL; object in bucket | P1 |
-| STOR-03 | S3 enabled, bad keys | S3 enabled, fake keys | Upload | Error (no silent local fallback success); no fake URL stored | P2 |
-| STOR-04 | Config precedence | DB + env both set | Upload | DB S3 settings used over env | P3 |
+| STOR-01 | Local upload + serve | R2 disabled | Upload image | URL `/uploads/...`; fetch returns 200 image | P1 |
+| STOR-02 | R2 routing | R2 enabled (admin panel) w/ valid keys | Upload image | Absolute R2 public URL; object in bucket | P1 |
+| STOR-03 | R2 enabled, bad keys | R2 enabled, fake keys | Upload | Error (no silent local fallback success); no fake URL stored | P2 |
+| STOR-04 | Config precedence | DB + env both set | Upload | DB R2 settings used over env | P3 |
 | STOR-05 | Editor image persists | Admin Pages editor | Insert inline image, save, reload | Image still shows (URL-based, not lost base64) | P1 |
 | STOR-06 | Non-image rejected | — | Upload .exe/.txt to image endpoint | Rejected by file filter | P2 |
 | STOR-07 | Oversized file rejected | — | Upload > size limit | 4xx, not stored | P2 |
@@ -131,7 +131,7 @@ Suggested automation: API/integration via Jest/Vitest + Supertest against
 
 | ID | Title | Steps | Expected | Pri |
 |----|-------|-------|----------|-----|
-| SEC-01 | Public config hides secrets | GET `/api/admin/config` (public) | No SMTP pass / payment secret / S3 secret | P1 |
+| SEC-01 | Public config hides secrets | GET `/api/admin/config` (public) | No SMTP pass / payment secret / R2 secret | P1 |
 | SEC-02 | Stored XSS sanitized | Save blog/page HTML with `<script>`/`onerror` | Rendered output stripped of script/handlers | P1 |
 | SEC-03 | Auth rate limit | >50 login attempts /15min | 429 Too Many Requests | P2 |
 | SEC-04 | General API rate limit | Exceed 600 req/15min | 429 | P3 |

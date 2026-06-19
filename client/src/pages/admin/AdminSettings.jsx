@@ -14,7 +14,7 @@ const SECTIONS = {
   smtp: { host: "", port: 587, secure: false, user: "", pass: "", fromName: "Haryana Job Marketplace", fromEmail: "" },
   sms: { provider: "twilio", apiUrl: "", apiKey: "", senderId: "", accountSid: "", authToken: "", fromNumber: "" },
   paymentGateway: { provider: "razorpay", keyId: "", keySecret: "", webhookSecret: "" },
-  s3Storage: { enabled: false, bucket: "", region: "", accessKeyId: "", secretAccessKey: "", publicUrl: "" },
+  r2Storage: { enabled: false, accountId: "", bucket: "", accessKeyId: "", secretAccessKey: "", publicUrl: "" },
 };
 
 const BRANDING_DEFAULTS = { siteName: "", siteTitle: "", metaDescription: "" };
@@ -27,7 +27,7 @@ export default function AdminSettings() {
   const [smtp, setSmtp] = useState(SECTIONS.smtp);
   const [sms, setSms] = useState(SECTIONS.sms);
   const [paymentGateway, setPaymentGateway] = useState(SECTIONS.paymentGateway);
-  const [s3Storage, setS3Storage] = useState(SECTIONS.s3Storage);
+  const [r2Storage, setR2Storage] = useState(SECTIONS.r2Storage);
   const [savedMsg, setSavedMsg] = useState("");
 
   const { data: configData, isLoading: configLoading } = useGetAdminConfigQuery();
@@ -42,7 +42,7 @@ export default function AdminSettings() {
       setSmtp({ ...SECTIONS.smtp, ...data.smtp });
       setSms({ ...SECTIONS.sms, ...data.sms });
       setPaymentGateway({ ...SECTIONS.paymentGateway, ...data.paymentGateway });
-      setS3Storage({ ...SECTIONS.s3Storage, ...data.s3Storage });
+      setR2Storage({ ...SECTIONS.r2Storage, ...data.r2Storage });
     }
   }, [data]);
 
@@ -343,50 +343,50 @@ export default function AdminSettings() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card space-y-3">
-        <h2 className="font-bold text-gray-900">File storage (Amazon S3)</h2>
+        <h2 className="font-bold text-gray-900">File storage (Cloudflare R2)</h2>
         <p className="text-sm text-gray-500">
-          Store uploaded images and files (logos, avatars, page/editor images, vendor docs, videos) on Amazon S3
+          Store uploaded images and files (logos, avatars, page/editor images, vendor docs, videos) on Cloudflare R2
           instead of the server's local disk — required for hosts with an ephemeral or non-shared filesystem. When
           disabled, files stay on local disk and are served from <code className="bg-gray-100 px-1 rounded">/uploads</code>.
-          See <code className="bg-gray-100 px-1 rounded">docs/S3_SETUP.md</code> for the full guide.
+          See <code className="bg-gray-100 px-1 rounded">docs/R2_SETUP.md</code> for the full guide.
         </p>
         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
           <input
             type="checkbox"
             className="accent-primary-600 w-4 h-4"
-            checked={s3Storage.enabled}
-            onChange={(e) => setS3Storage({ ...s3Storage, enabled: e.target.checked })}
+            checked={r2Storage.enabled}
+            onChange={(e) => setR2Storage({ ...r2Storage, enabled: e.target.checked })}
           />
-          Enable S3 storage
+          Enable R2 storage
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>
+            <label className="block text-gray-600 mb-1">Account ID</label>
+            <input className={inputCls} placeholder="e.g. 0a1b2c3d4e5f..." value={r2Storage.accountId} onChange={(e) => setR2Storage({ ...r2Storage, accountId: e.target.value })} />
+          </div>
+          <div>
             <label className="block text-gray-600 mb-1">Bucket name</label>
-            <input className={inputCls} placeholder="haryana-jobapp-uploads" value={s3Storage.bucket} onChange={(e) => setS3Storage({ ...s3Storage, bucket: e.target.value })} />
+            <input className={inputCls} placeholder="haryana-jobapp-uploads" value={r2Storage.bucket} onChange={(e) => setR2Storage({ ...r2Storage, bucket: e.target.value })} />
           </div>
           <div>
-            <label className="block text-gray-600 mb-1">Region</label>
-            <input className={inputCls} placeholder="ap-south-1" value={s3Storage.region} onChange={(e) => setS3Storage({ ...s3Storage, region: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-gray-600 mb-1">Access Key ID</label>
-            <input className={inputCls} value={s3Storage.accessKeyId} onChange={(e) => setS3Storage({ ...s3Storage, accessKeyId: e.target.value })} />
+            <label className="block text-gray-600 mb-1">Access Key ID (R2 token)</label>
+            <input className={inputCls} value={r2Storage.accessKeyId} onChange={(e) => setR2Storage({ ...r2Storage, accessKeyId: e.target.value })} />
           </div>
           <div>
             <label className="block text-gray-600 mb-1">Secret Access Key</label>
-            <input className={inputCls} type="password" value={s3Storage.secretAccessKey} onChange={(e) => setS3Storage({ ...s3Storage, secretAccessKey: e.target.value })} />
+            <input className={inputCls} type="password" value={r2Storage.secretAccessKey} onChange={(e) => setR2Storage({ ...r2Storage, secretAccessKey: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-gray-600 mb-1">Public URL / CDN (optional)</label>
-            <input className={inputCls} placeholder="https://dxxxx.cloudfront.net (leave blank to use the default bucket URL)" value={s3Storage.publicUrl} onChange={(e) => setS3Storage({ ...s3Storage, publicUrl: e.target.value })} />
+            <label className="block text-gray-600 mb-1">Public URL (r2.dev or custom domain)</label>
+            <input className={inputCls} placeholder="https://pub-xxxx.r2.dev or https://cdn.yoursite.com" value={r2Storage.publicUrl} onChange={(e) => setR2Storage({ ...r2Storage, publicUrl: e.target.value })} />
           </div>
         </div>
         <p className="text-xs text-gray-400">
-          Tip: leave Access Key / Secret blank to use the server's IAM role or environment credentials.
+          Tip: enable the bucket's public r2.dev domain (or attach a custom domain) and paste it above so uploaded files are publicly viewable.
         </p>
         <button
           disabled={saving}
-          onClick={() => save("s3Storage", s3Storage)}
+          onClick={() => save("r2Storage", r2Storage)}
           className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors"
         >
           {saving ? "Saving..." : "Save storage settings"}

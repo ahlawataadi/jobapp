@@ -49,16 +49,16 @@ const adminConfigSchema = new mongoose.Schema({
     keySecret: { type: String, default: "" },
     webhookSecret: { type: String, default: "" },
   },
-  // S3 / file storage. When enabled (with bucket + region) uploads go to S3;
-  // otherwise files are kept on local disk. DB values take precedence over the
-  // STORAGE_DRIVER / S3_* env vars. See docs/S3_SETUP.md.
-  s3Storage: {
+  // Cloudflare R2 file storage. When enabled (with account ID + bucket) uploads
+  // go to R2; otherwise files are kept on local disk. DB values take precedence
+  // over the STORAGE_DRIVER / R2_* env vars. See docs/R2_SETUP.md.
+  r2Storage: {
     enabled: { type: Boolean, default: false },
+    accountId: { type: String, default: "" },
     bucket: { type: String, default: "" },
-    region: { type: String, default: "" },
     accessKeyId: { type: String, default: "" },
     secretAccessKey: { type: String, default: "" },
-    publicUrl: { type: String, default: "" },
+    publicUrl: { type: String, default: "" },  // r2.dev or custom domain
   },
   // Pricing & fees (all amounts in ₹)
   contactPacks: {
