@@ -7,7 +7,7 @@
 
 A single-page React client talks to an Express REST API backed by MongoDB.
 Authentication is JWT (short-lived access token + httpOnly refresh cookie).
-Uploaded files go to local disk or Amazon S3 via a storage abstraction.
+Uploaded files go to local disk or Cloudflare R2 via a storage abstraction.
 Payments run through Razorpay. Email/SMS are pluggable (SMTP / Twilio or a
 generic HTTP gateway), all configurable at runtime from the admin panel.
 
@@ -28,14 +28,14 @@ graph TD
   end
 
   DB[(MongoDB)]
-  S3[(S3 / local /uploads)]
+  R2[(R2 / local /uploads)]
   RZP[Razorpay]
   MAIL[SMTP / Email]
   SMS[Twilio / SMS gateway]
 
   RTK -- HTTPS /api --> MW
   CTRL --> DB
-  UTIL --> S3
+  UTIL --> R2
   CTRL --> RZP
   UTIL --> MAIL
   UTIL --> SMS
@@ -48,7 +48,7 @@ graph TD
 | Client | React 18, Vite, React Router v6, Redux Toolkit + RTK Query, Tailwind CSS, TipTap (rich text), Recharts (admin analytics), DOMPurify |
 | Server | Node.js (ES modules), Express, Mongoose, JWT (`jsonwebtoken`), `bcryptjs`, `multer`, `express-rate-limit`, `helmet`, `morgan`, `node-cron` |
 | Data | MongoDB (Mongoose ODM) |
-| Storage | Local disk (`/uploads`) or Amazon S3 (`@aws-sdk/client-s3`) via `utils/storage.js` |
+| Storage | Local disk (`/uploads`) or Cloudflare R2 (S3-compatible, via `@aws-sdk/client-s3`) in `utils/storage.js` |
 | Payments | Razorpay (orders + HMAC signature verification + webhook) |
 | Messaging | Nodemailer (SMTP), Twilio or generic HTTP SMS |
 | Infra/CI | GitHub Actions (build + syntax check) |
@@ -72,7 +72,7 @@ server/                 Express API
     utils/              storage, mailer, sms, tokens, webhooks, subscription
     jobs/               blogScheduler (node-cron automation)
     scripts/            seed.js, etl.js, memdb.js
-docs/                   architecture, features, test cases, S3 setup
+docs/                   architecture, features, test cases, R2 setup
 ```
 
 ## 4. Authentication & session flow
@@ -171,12 +171,12 @@ enforced server-side by `requireActiveSubscription`, not just hidden in the UI.
 graph LR
   Req[multipart upload] --> Multer[multer disk storage]
   Multer --> PU["persistUpload(file, subdir)"]
-  PU -->|S3 enabled| S3[(S3 bucket)] --> URLA[absolute URL]
+  PU -->|R2 enabled| R2[(R2 bucket)] --> URLA[absolute URL]
   PU -->|else| Local[(/uploads)] --> URLR[/uploads/... URL]
 ```
 
-S3 is configured from **Admin → Settings** (DB) or env vars; DB takes
-precedence. See [S3_SETUP.md](S3_SETUP.md).
+R2 is configured from **Admin → Settings** (DB) or env vars; DB takes
+precedence. See [R2_SETUP.md](R2_SETUP.md).
 
 ## 6. Data model (key collections)
 
@@ -203,7 +203,7 @@ erDiagram
 - **Application** — unique compound index `{jobId, userId}`; status workflow.
 - **Payment** — `type` = vendor_signup | subscription | contactPack; Razorpay ids.
 - **AdminConfig** — singleton (`_id: "config"`) holding all runtime settings
-  (branding, fees, plans, integrations, S3).
+  (branding, fees, plans, integrations, R2).
 - **Blog, Banner, Review, Webhook, ChatMessage, ContactUnlock, ActivityLog,
   EtlRun**.
 
@@ -240,7 +240,7 @@ graph LR
 - **Dev**: Vite dev server (`:3000`) proxies `/api` and `/uploads` to the API
   (`:5000`). MongoDB local or `mongodb-memory-server` (`scripts/memdb.js`).
 - **Prod**: build the client (`vite build`) and serve statically; run the API
-  with a process manager; point `MONGO_URI` at a managed DB; enable S3 so
+  with a process manager; point `MONGO_URI` at a managed DB; enable R2 so
   uploads survive redeploys; set real Razorpay/SMTP/SMS credentials (env or
   admin panel).
 

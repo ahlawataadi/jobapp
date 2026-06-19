@@ -30,7 +30,7 @@ export const createEmailBroadcast = async (req, res, next) => {
     const recipients = await User.find(audienceFilter(audience)).select("email name");
     const imageUrl = req.file ? await persistUpload(req.file, "broadcasts") : "";
     const origin = req.headers.origin || "";
-    // S3 returns an absolute URL; local storage returns a relative path needing the origin.
+    // R2 returns an absolute URL; local storage returns a relative path needing the origin.
     const imageSrc = imageUrl && /^https?:\/\//.test(imageUrl) ? imageUrl : `${origin}${imageUrl}`;
 
     const broadcast = await Broadcast.create({
