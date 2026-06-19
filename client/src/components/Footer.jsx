@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
+import { useGetAdminConfigQuery } from "../store/jobsApi.js";
 
 export default function Footer() {
+  const { data } = useGetAdminConfigQuery();
+  const siteName = data?.config?.siteName || "Haryana Job Marketplace";
+  const tagline = data?.config?.metaDescription ||
+    "Connecting job seekers with employers across Haryana — diagnostics, manufacturing, logistics, IT and more.";
   return (
     <footer className="bg-gray-900 text-gray-300" aria-label="Site footer">
       <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-5 gap-6 text-sm">
         <div>
-          <h2 className="text-white font-semibold mb-2">Haryana Job Marketplace</h2>
-          <p className="text-gray-400">
-            Connecting job seekers with employers across Haryana — diagnostics, manufacturing,
-            logistics, IT and more.
-          </p>
+          <h2 className="text-white font-semibold mb-2">{siteName}</h2>
+          <p className="text-gray-400">{tagline}</p>
         </div>
         <nav aria-label="For job seekers">
           <h3 className="text-white font-medium mb-2">For Job Seekers</h3>

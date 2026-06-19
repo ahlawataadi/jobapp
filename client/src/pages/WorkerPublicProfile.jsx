@@ -6,6 +6,7 @@ import {
   useUnlockWorkerContactMutation,
   useCreateContactPackOrderMutation,
   useVerifyContactPackPurchaseMutation,
+  useGetAdminConfigQuery,
 } from "../store/jobsApi.js";
 import { categoryLabel } from "../constants/categories.js";
 
@@ -32,21 +33,30 @@ function formatRate(wp) {
   return null;
 }
 
-const PACKS = [
-  { key: "starter", credits: 10, price: "₹49" },
-  { key: "standard", credits: 25, price: "₹199" },
-  { key: "pro", credits: 40, price: "₹499" },
-];
+// Fallback prices/credits if the admin config hasn't loaded yet.
+const DEFAULT_PACKS = {
+  starter: { credits: 10, price: 49 },
+  standard: { credits: 25, price: 199 },
+  pro: { credits: 40, price: 499 },
+};
 
 export default function WorkerPublicProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
   const { data, isLoading, refetch } = useGetWorkerQuery(id, { skip: !user });
+  const { data: configData } = useGetAdminConfigQuery();
   const [unlock, { isLoading: unlocking }] = useUnlockWorkerContactMutation();
   const [createPackOrder] = useCreateContactPackOrderMutation();
   const [verifyPackPurchase] = useVerifyContactPackPurchaseMutation();
   const [buying, setBuying] = useState(false);
+
+  // Contact-pack prices/credits come from admin Fees & Pricing, not hardcoded.
+  const cfgPacks = configData?.config?.contactPacks;
+  const packs = ["starter", "standard", "pro"].map((key) => {
+    const p = cfgPacks?.[key] || DEFAULT_PACKS[key];
+    return { key, credits: p.credits, price: `₹${Number(p.price).toLocaleString("en-IN")}` };
+  });
   const [showPackModal, setShowPackModal] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -106,7 +116,7 @@ export default function WorkerPublicProfile() {
         key: order.keyId,
         amount: order.amount,
         currency: order.currency,
-        name: "Haryana Job Marketplace",
+        name: configData?.config?.siteName || "Haryana Job Marketplace",
         description: `Contact credits — ${packKey} pack`,
         order_id: order.orderId,
         handler: async (response) => {
@@ -254,7 +264,7 @@ export default function WorkerPublicProfile() {
             <h2 className="font-bold text-gray-900 text-lg">Purchase Contact Pack</h2>
             <p className="text-sm text-gray-600">You have no credits. Buy a pack to unlock worker contacts.</p>
             <div className="space-y-3">
-              {PACKS.map((p) => (
+              {packs.map((p) => (
                 <button
                   key={p.key}
                   onClick={() => handleBuyPack(p.key)}

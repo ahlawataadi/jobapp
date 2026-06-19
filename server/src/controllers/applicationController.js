@@ -14,7 +14,8 @@ export const applyToJob = async (req, res, next) => {
     const application = await Application.create({
       jobId: job._id,
       userId: req.user._id,
-      resumeUrl: req.body.resumeUrl,
+      // Fall back to the resume saved on the seeker's profile.
+      resumeUrl: req.body.resumeUrl || req.user.workerProfile?.resumeUrl || "",
       coverNote: req.body.coverNote,
     });
 

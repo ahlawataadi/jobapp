@@ -5,6 +5,8 @@ import {
   updateMyWorkerProfile,
   uploadWorkerVideo,
   removeWorkerVideo,
+  uploadResume,
+  removeResume,
   unlockWorkerContact,
   buyContactPack,
   adminVerifyWorker,
@@ -12,6 +14,7 @@ import {
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { requireActiveSubscription } from "../utils/subscription.js";
 import videoUpload from "../middleware/videoUpload.js";
+import resumeUpload from "../middleware/resumeUpload.js";
 
 const router = Router();
 
@@ -20,6 +23,8 @@ router.get("/", listWorkers);
 router.put("/me/profile", requireAuth, requireRole("seeker"), updateMyWorkerProfile);
 router.post("/me/video", requireAuth, requireRole("seeker"), requireActiveSubscription, videoUpload.single("video"), uploadWorkerVideo);
 router.delete("/me/video", requireAuth, requireRole("seeker"), removeWorkerVideo);
+router.post("/me/resume", requireAuth, requireRole("seeker"), resumeUpload.single("resume"), uploadResume);
+router.delete("/me/resume", requireAuth, requireRole("seeker"), removeResume);
 router.post("/contact-packs/buy", requireAuth, requireRole("vendor"), buyContactPack);
 
 // Parameterized routes

@@ -13,7 +13,7 @@ const baseQuery = fetchBaseQuery({
 export const jobsApi = createApi({
   reducerPath: "jobsApi",
   baseQuery,
-  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast", "Blog", "Worker", "Chat"],
+  tagTypes: ["Job", "Application", "AdminConfig", "Vendor", "User", "Me", "Payment", "Banner", "Webhook", "Analytics", "Settings", "Broadcast", "Blog", "Worker", "Chat", "SavedJob"],
   endpoints: (builder) => ({
     getJobs: builder.query({
       query: (params) => ({ url: "/jobs", params }),
@@ -36,6 +36,18 @@ export const jobsApi = createApi({
     applyToJob: builder.mutation({
       query: ({ id, ...body }) => ({ url: `/jobs/${id}/apply`, method: "POST", body }),
       invalidatesTags: ["Application"],
+    }),
+    getSavedJobs: builder.query({
+      query: () => "/jobs/saved/me",
+      providesTags: ["SavedJob"],
+    }),
+    saveJob: builder.mutation({
+      query: (id) => ({ url: `/jobs/${id}/save`, method: "POST" }),
+      invalidatesTags: ["SavedJob", "Me"],
+    }),
+    unsaveJob: builder.mutation({
+      query: (id) => ({ url: `/jobs/${id}/save`, method: "DELETE" }),
+      invalidatesTags: ["SavedJob", "Me"],
     }),
     myApplications: builder.query({
       query: () => "/applications/mine",
@@ -321,6 +333,14 @@ export const jobsApi = createApi({
       query: () => ({ url: "/workers/me/video", method: "DELETE" }),
       invalidatesTags: ["Worker"],
     }),
+    uploadResume: builder.mutation({
+      query: (formData) => ({ url: "/workers/me/resume", method: "POST", body: formData }),
+      invalidatesTags: ["Me", "Worker"],
+    }),
+    removeResume: builder.mutation({
+      query: () => ({ url: "/workers/me/resume", method: "DELETE" }),
+      invalidatesTags: ["Me", "Worker"],
+    }),
     uploadVendorVideo: builder.mutation({
       query: (formData) => ({ url: "/vendors/me/video", method: "POST", body: formData }),
       invalidatesTags: ["Vendor"],
@@ -440,6 +460,9 @@ export const {
   useSuggestJobsQuery,
   useDistrictStatsQuery,
   useApplyToJobMutation,
+  useGetSavedJobsQuery,
+  useSaveJobMutation,
+  useUnsaveJobMutation,
   useMyApplicationsQuery,
   useMyJobsQuery,
   useCreateJobMutation,
@@ -524,6 +547,8 @@ export const {
   useSetUserSubscriptionMutation,
   useUploadWorkerVideoMutation,
   useRemoveWorkerVideoMutation,
+  useUploadResumeMutation,
+  useRemoveResumeMutation,
   useUploadVendorVideoMutation,
   useRemoveVendorVideoMutation,
   useAddVendorBusinessMutation,

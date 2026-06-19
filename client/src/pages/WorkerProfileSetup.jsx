@@ -5,6 +5,8 @@ import {
   useUpdateMyWorkerProfileMutation,
   useUploadWorkerVideoMutation,
   useRemoveWorkerVideoMutation,
+  useUploadResumeMutation,
+  useRemoveResumeMutation,
 } from "../store/jobsApi.js";
 import { WORKER_CATEGORIES, skillsForCategory } from "../constants/categories.js";
 
@@ -58,7 +60,10 @@ export default function WorkerProfileSetup() {
   const [updateProfile, { isLoading }] = useUpdateMyWorkerProfileMutation();
   const [uploadVideo, { isLoading: uploadingVideo }] = useUploadWorkerVideoMutation();
   const [removeVideo, { isLoading: removingVideo }] = useRemoveWorkerVideoMutation();
+  const [uploadResume, { isLoading: uploadingResume }] = useUploadResumeMutation();
+  const [removeResume, { isLoading: removingResume }] = useRemoveResumeMutation();
   const videoRef = useRef(null);
+  const resumeRef = useRef(null);
 
   const [form, setForm] = useState({
     skillCategory: "",
@@ -77,6 +82,7 @@ export default function WorkerProfileSetup() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [videoMsg, setVideoMsg] = useState("");
+  const [resumeMsg, setResumeMsg] = useState("");
 
   useEffect(() => {
     const wp = user?.workerProfile;
@@ -410,6 +416,65 @@ export default function WorkerProfileSetup() {
           </div>
         )}
         {videoMsg && <p className="text-sm text-gray-600">{videoMsg}</p>}
+      </div>
+
+      {/* Resume — managed separately, outside main form */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-card space-y-3">
+        <h2 className="font-bold text-gray-900">Resume</h2>
+        <p className="text-sm text-gray-500">
+          Upload your resume (PDF/DOC/DOCX, max 5 MB). It's attached automatically when you apply to jobs.
+        </p>
+        {user?.workerProfile?.resumeUrl && (
+          <div className="flex items-center gap-3 text-sm">
+            <a
+              href={user.workerProfile.resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-700 font-medium hover:underline"
+            >
+              📄 View current resume
+            </a>
+            <button
+              onClick={async () => {
+                setResumeMsg("");
+                try {
+                  await removeResume().unwrap();
+                  setResumeMsg("Resume removed.");
+                } catch { setResumeMsg("Remove failed."); }
+              }}
+              disabled={removingResume}
+              className="text-xs text-red-600 hover:text-red-800 font-medium"
+            >
+              {removingResume ? "Removing…" : "Remove"}
+            </button>
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <input
+            ref={resumeRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setResumeMsg("");
+              const fd = new FormData();
+              fd.append("resume", file);
+              try {
+                await uploadResume(fd).unwrap();
+                setResumeMsg("Resume uploaded successfully.");
+              } catch (e2) {
+                setResumeMsg(e2?.data?.message || "Upload failed.");
+              } finally {
+                if (resumeRef.current) resumeRef.current.value = "";
+              }
+            }}
+            disabled={uploadingResume}
+          />
+          {uploadingResume && <span className="text-sm text-gray-500">Uploading…</span>}
+        </div>
+        {resumeMsg && <p className="text-sm text-gray-600">{resumeMsg}</p>}
       </div>
     </div>
   );
