@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import https from "https";
 import crypto from "crypto";
 import { getConfig } from "../models/AdminConfig.js";
 
@@ -12,7 +13,8 @@ import { getConfig } from "../models/AdminConfig.js";
  * multi-instance hosts without losing uploads.
  *
  * R2 is integrated natively over HTTPS with AWS SigV4 request signing (Node's
- * built-in crypto + fetch) — no AWS SDK dependency. Config comes from the
+ * built-in crypto + https) — no AWS SDK dependency, and no reliance on global
+ * fetch (which isn't present on older Node runtimes). Config comes from the
  * Admin → Settings page (AdminConfig.r2Storage); env vars (STORAGE_DRIVER=r2 +
  * R2_*) are the fallback. See docs/R2_SETUP.md.
  */
@@ -53,11 +55,20 @@ const hmac = (key, data) => crypto.createHmac("sha256", key).update(data).digest
 // Encode a key into a canonical URI path: encode each segment, keep the slashes.
 const encodeKey = (key) => key.split("/").map(encodeURIComponent).join("/");
 
+// Storage errors are safe to show the user (they carry R2's own status/message,
+// no secrets) — mark them so the error handler doesn't mask them as a 500.
+function storageError(message) {
+  const err = new Error(message);
+  err.status = 502;
+  err.expose = true;
+  return err;
+}
+
 /**
  * Upload an object to Cloudflare R2 via the S3-compatible REST API, signed with
- * AWS Signature V4. No SDK — just crypto + fetch.
+ * AWS Signature V4. Uses Node's https module (no SDK, no global fetch).
  */
-async function r2PutObject(r2, key, body, contentType) {
+function r2PutObject(r2, key, body, contentType) {
   const host = `${r2.accountId}.r2.cloudflarestorage.com`;
   const region = "auto";
   const service = "s3";
@@ -88,22 +99,34 @@ async function r2PutObject(r2, key, body, contentType) {
     `AWS4-HMAC-SHA256 Credential=${r2.accessKeyId}/${scope}, ` +
     `SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-  const res = await fetch(`https://${host}${canonicalUri}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
-      "x-amz-content-sha256": payloadHash,
-      "x-amz-date": amzDate,
-      Authorization: authorization,
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-    body,
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        method: "PUT",
+        hostname: host,
+        path: canonicalUri,
+        headers: {
+          "Content-Type": contentType,
+          "Content-Length": body.length,
+          "x-amz-content-sha256": payloadHash,
+          "x-amz-date": amzDate,
+          Authorization: authorization,
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) return resolve();
+          const text = Buffer.concat(chunks).toString().replace(/\s+/g, " ").slice(0, 300);
+          reject(storageError(`R2 upload failed (${res.statusCode}): ${text}`));
+        });
+      }
+    );
+    req.on("error", (e) => reject(storageError(`R2 connection error: ${e.message}`)));
+    req.write(body);
+    req.end();
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`R2 upload failed (${res.status}): ${text.slice(0, 300)}`);
-  }
 }
 
 function publicUrl(r2, key) {
