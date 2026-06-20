@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/axios.js";
 import { useGetAdminConfigQuery } from "../store/jobsApi.js";
@@ -9,9 +9,25 @@ const inputCls =
 export default function Register() {
   const { data: configData } = useGetAdminConfigQuery();
   const siteName = configData?.config?.siteName || "Haryana Job Marketplace";
+  // Only offer verification channels the admin has actually enabled.
+  const otp = configData?.config?.otpSettings || {};
+  const emailEnabled = otp.emailEnabled !== false;
+  const smsEnabled = otp.smsEnabled !== false;
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "seeker", channel: "email" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Channels available to pick from (SMS needs a phone + SMS OTP enabled).
+  const channelOptions = [
+    ...(emailEnabled ? [{ v: "email", label: "Email" }] : []),
+    ...(smsEnabled && form.phone ? [{ v: "phone", label: "SMS" }] : []),
+  ];
+  // Keep the selected channel valid as toggles/phone change.
+  useEffect(() => {
+    if (channelOptions.length && !channelOptions.some((o) => o.v === form.channel)) {
+      setForm((f) => ({ ...f, channel: channelOptions[0].v }));
+    }
+  }, [emailEnabled, smsEnabled, form.phone]); // eslint-disable-line react-hooks/exhaustive-deps
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -80,14 +96,14 @@ export default function Register() {
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
           </div>
-          {form.phone && (
+          {/* Only show the channel chooser when both email and SMS verification
+              are enabled (a real choice). When only one is on, it's used
+              automatically; when neither is on, no verification happens. */}
+          {channelOptions.length >= 2 && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Send verification code via</label>
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  { v: "email", label: "Email" },
-                  { v: "phone", label: "SMS" },
-                ].map((opt) => (
+                {channelOptions.map((opt) => (
                   <label
                     key={opt.v}
                     className={`flex items-center justify-center gap-2 border rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
