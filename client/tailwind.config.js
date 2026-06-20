@@ -5,24 +5,28 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Driven by CSS variables (see index.css :root defaults) so the admin
+        // Theme page can recolor the whole app at runtime. Channels are
+        // space-separated RGB to support Tailwind's <alpha-value> opacity.
         primary: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
+          50: "rgb(var(--color-primary-50) / <alpha-value>)",
+          100: "rgb(var(--color-primary-100) / <alpha-value>)",
+          200: "rgb(var(--color-primary-200) / <alpha-value>)",
+          300: "rgb(var(--color-primary-300) / <alpha-value>)",
+          400: "rgb(var(--color-primary-400) / <alpha-value>)",
+          500: "rgb(var(--color-primary-500) / <alpha-value>)",
+          600: "rgb(var(--color-primary-600) / <alpha-value>)",
+          700: "rgb(var(--color-primary-700) / <alpha-value>)",
+          800: "rgb(var(--color-primary-800) / <alpha-value>)",
+          900: "rgb(var(--color-primary-900) / <alpha-value>)",
         },
         accent: {
-          50: "#fff7ed",
-          100: "#ffedd5",
-          400: "#fb923c",
-          500: "#f97316",
-          600: "#ea580c",
+          50: "rgb(var(--color-accent-50) / <alpha-value>)",
+          100: "rgb(var(--color-accent-100) / <alpha-value>)",
+          400: "rgb(var(--color-accent-400) / <alpha-value>)",
+          500: "rgb(var(--color-accent-500) / <alpha-value>)",
+          600: "rgb(var(--color-accent-600) / <alpha-value>)",
+          700: "rgb(var(--color-accent-700) / <alpha-value>)",
         },
       },
       fontFamily: {

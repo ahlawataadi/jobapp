@@ -2,8 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default brand palette (RGB channels). The admin Theme page overrides these
+   variables at runtime via applyTheme(); kept in sync with the original
+   Tailwind palette so the app looks unchanged until a theme is set. */
+:root {
+  --color-primary-50: 238 242 255;
+  --color-primary-100: 224 231 255;
+  --color-primary-200: 199 210 254;
+  --color-primary-300: 165 180 252;
+  --color-primary-400: 129 140 248;
+  --color-primary-500: 99 102 241;
+  --color-primary-600: 79 70 229;
+  --color-primary-700: 67 56 202;
+  --color-primary-800: 55 48 163;
+  --color-primary-900: 49 46 129;
+  --color-accent-50: 255 247 237;
+  --color-accent-100: 255 237 213;
+  --color-accent-400: 251 146 60;
+  --color-accent-500: 249 115 22;
+  --color-accent-600: 234 88 12;
+  --color-accent-700: 194 65 12;
+  --app-font: "Inter";
+}
+
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--app-font), "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   color: #111827;
   background-color: #f9fafb;

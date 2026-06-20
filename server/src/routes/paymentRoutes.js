@@ -7,6 +7,8 @@ import {
   verifySubscriptionPayment,
   createContactPackOrder,
   verifyContactPackPurchase,
+  createSeekerSignupOrder,
+  verifySeekerSignupPayment,
 } from "../controllers/paymentController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -15,6 +17,10 @@ const router = Router();
 // Vendor signup fee
 router.post("/create-order", requireAuth, createOrder);
 router.post("/verify", requireAuth, verifyPayment);
+
+// Seeker signup fee
+router.post("/seeker-signup/create-order", requireAuth, createSeekerSignupOrder);
+router.post("/seeker-signup/verify", requireAuth, verifySeekerSignupPayment);
 
 // Subscription purchase
 router.post("/subscribe/create-order", requireAuth, createSubscriptionOrder);
