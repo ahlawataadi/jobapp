@@ -6,6 +6,7 @@ import {
   useGetJobsQuery,
 } from "../../store/jobsApi.js";
 import { JOB_TYPE_OPTIONS, PAY_UNIT_OPTIONS, jobTypeLabel, formatPay } from "../../constants/jobTypes.js";
+import Pagination from "../../components/Pagination.jsx";
 
 const input =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
@@ -26,8 +27,9 @@ const EMPTY = {
 };
 
 export default function AdminJobs() {
+  const [page, setPage] = useState(1);
   const { data: vendorsData } = useListAdminVendorsQuery({ limit: 100, status: "active" });
-  const { data: jobsData, refetch } = useGetJobsQuery({ limit: 10, sort: "recent" });
+  const { data: jobsData, refetch } = useGetJobsQuery({ page, limit: 10, sort: "recent" });
   const [createJob, { isLoading }] = useAdminCreateJobMutation();
   const [form, setForm] = useState(EMPTY);
   const [msg, setMsg] = useState("");
@@ -189,6 +191,9 @@ export default function AdminJobs() {
               )}
             </tbody>
           </table>
+          <div className="mt-4">
+            <Pagination page={page} pages={jobsData?.pages} onChange={setPage} />
+          </div>
         </div>
       </div>
     </div>
