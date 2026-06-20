@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListBroadcastsQuery, useCreateEmailBroadcastMutation } from "../../store/jobsApi.js";
+import Pagination from "../../components/Pagination.jsx";
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none w-full";
@@ -11,7 +12,8 @@ const AUDIENCES = [
 ];
 
 export default function AdminBroadcastEmail() {
-  const { data, isLoading } = useListBroadcastsQuery({ channel: "email" });
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useListBroadcastsQuery({ channel: "email", page, limit: 10 });
   const [createEmailBroadcast, { isLoading: sending, error }] = useCreateEmailBroadcastMutation();
   const [form, setForm] = useState({ title: "", description: "", audience: "all" });
   const [image, setImage] = useState(null);
@@ -100,6 +102,9 @@ export default function AdminBroadcastEmail() {
             </div>
           ))}
           {!isLoading && !data?.broadcasts?.length && <p className="text-sm text-gray-500">No email broadcasts sent yet.</p>}
+        </div>
+        <div className="mt-4">
+          <Pagination page={page} pages={data?.pages} onChange={setPage} />
         </div>
       </div>
     </div>

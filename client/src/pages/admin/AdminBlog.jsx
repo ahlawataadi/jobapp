@@ -9,6 +9,7 @@ import {
   useImportBlogsMutation,
   useSeedSampleBlogsMutation,
 } from "../../store/jobsApi.js";
+import Pagination from "../../components/Pagination.jsx";
 
 const BLOG_CATEGORIES = [
   { value: "", label: "— General —" },
@@ -37,7 +38,8 @@ const EMPTY = {
 };
 
 export default function AdminBlog() {
-  const { data, refetch } = useListAdminBlogsQuery({ limit: 50 });
+  const [page, setPage] = useState(1);
+  const { data, refetch } = useListAdminBlogsQuery({ page, limit: 10 });
   const [editingId, setEditingId] = useState(null);
   const { data: full } = useGetAdminBlogQuery(editingId, { skip: !editingId });
   const [createBlog, { isLoading: creating }] = useCreateBlogMutation();
@@ -320,6 +322,9 @@ export default function AdminBlog() {
               )}
             </tbody>
           </table>
+          <div className="mt-4">
+            <Pagination page={page} pages={data?.pages} onChange={setPage} />
+          </div>
         </div>
       </div>
     </div>

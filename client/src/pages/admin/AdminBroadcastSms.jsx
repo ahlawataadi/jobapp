@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListBroadcastsQuery, useCreateSmsBroadcastMutation } from "../../store/jobsApi.js";
+import Pagination from "../../components/Pagination.jsx";
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none w-full";
@@ -11,7 +12,8 @@ const AUDIENCES = [
 ];
 
 export default function AdminBroadcastSms() {
-  const { data, isLoading } = useListBroadcastsQuery({ channel: "sms" });
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useListBroadcastsQuery({ channel: "sms", page, limit: 10 });
   const [createSmsBroadcast, { isLoading: sending, error }] = useCreateSmsBroadcastMutation();
   const [form, setForm] = useState({ title: "", description: "", audience: "all" });
   const [result, setResult] = useState("");
@@ -89,6 +91,9 @@ export default function AdminBroadcastSms() {
             </div>
           ))}
           {!isLoading && !data?.broadcasts?.length && <p className="text-sm text-gray-500">No SMS broadcasts sent yet.</p>}
+        </div>
+        <div className="mt-4">
+          <Pagination page={page} pages={data?.pages} onChange={setPage} />
         </div>
       </div>
     </div>
