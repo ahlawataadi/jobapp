@@ -313,6 +313,76 @@ export const verifyContactPackPurchase = async (req, res, next) => {
   }
 };
 
+// POST /api/payments/seeker-signup/create-order
+// One-time job-seeker signup fee. Returns { free: true } when it's not enabled.
+export const createSeekerSignupOrder = async (req, res, next) => {
+  try {
+    if (req.user.role !== "seeker") {
+      return res.status(403).json({ message: "Only job seekers pay the seeker signup fee" });
+    }
+    const config = await getConfig();
+    const fee = config.seekerSignupFee || {};
+    if (!fee.enabled || !(fee.amount > 0)) {
+      return res.json({ free: true });
+    }
+    const user = await User.findById(req.user._id);
+    if (user.signupFeePaid) return res.json({ already: true });
+
+    const keys = getGatewayKeys(config);
+    const razorpay = getRazorpay(keys);
+    const order = await razorpay.orders.create({
+      amount: fee.amount,
+      currency: "INR",
+      receipt: `seeker_${String(req.user._id).slice(-6)}_${Date.now()}`,
+      notes: { userId: req.user._id.toString() },
+    });
+
+    await Payment.create({
+      type: "seeker_signup",
+      userId: req.user._id,
+      razorpayOrderId: order.id,
+      amount: fee.amount,
+      status: "created",
+    });
+
+    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: keys.keyId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/payments/seeker-signup/verify
+export const verifySeekerSignupPayment = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Missing payment verification fields" });
+    }
+    const config = await getConfig();
+    const keys = getGatewayKeys(config);
+    const expected = crypto
+      .createHmac("sha256", keys.keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id, type: "seeker_signup" });
+    if (!payment) return res.status(404).json({ message: "Payment record not found" });
+    if (payment.status !== "paid") {
+      payment.razorpayPaymentId = razorpay_payment_id;
+      payment.razorpaySignature = razorpay_signature;
+      payment.status = "paid";
+      await payment.save();
+      await User.updateOne({ _id: payment.userId }, { $set: { signupFeePaid: true } });
+    }
+    res.json({ message: "Signup fee paid", signupFeePaid: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /api/payments/webhook  (Razorpay webhook - source of truth)
 export const razorpayWebhook = async (req, res, next) => {
   try {
@@ -362,6 +432,8 @@ export const razorpayWebhook = async (req, res, next) => {
             user.contactCredits += payment.creditsAdded;
             await user.save();
           }
+        } else if (payment.type === "seeker_signup") {
+          await User.updateOne({ _id: payment.userId }, { $set: { signupFeePaid: true } });
         }
       }
     }

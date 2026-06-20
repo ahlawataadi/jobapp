@@ -3,7 +3,18 @@ import mongoose from "mongoose";
 const adminConfigSchema = new mongoose.Schema({
   _id: { type: String, default: "config" },
   paymentRequired: { type: Boolean, default: false },
-  signupFeeAmount: { type: Number, default: 0 }, // paise
+  signupFeeAmount: { type: Number, default: 0 }, // paise (vendor signup fee)
+  // Job-seeker signup fee (separate from the vendor one).
+  seekerSignupFee: {
+    enabled: { type: Boolean, default: false },
+    amount: { type: Number, default: 0 }, // paise
+  },
+  // Appearance / theme (applied at runtime via CSS variables).
+  theme: {
+    primaryColor: { type: String, default: "#2563eb" }, // base of the primary palette
+    accentColor: { type: String, default: "#f97316" },  // base of the accent palette
+    fontFamily: { type: String, default: "Inter" },
+  },
   analyticsScript: { type: String, default: "" },
   siteName: { type: String, default: "Haryana Job Marketplace" },
   siteTitle: { type: String, default: "Haryana Job Marketplace — Find Jobs Across Haryana" },

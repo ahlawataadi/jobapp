@@ -54,6 +54,7 @@ export default function AdminFees() {
   const [vendorPlans, setVendorPlans] = useState(DEFAULT_VENDOR_PLANS);
   const [featured, setFeatured] = useState(DEFAULT_FEATURED);
   const [featuredVendor, setFeaturedVendor] = useState(DEFAULT_FEATURED_VENDOR);
+  const [seekerFee, setSeekerFee] = useState({ enabled: false, amount: 0 });
 
   useEffect(() => {
     const cfg = configData?.config;
@@ -62,6 +63,11 @@ export default function AdminFees() {
     setSignupFee({
       required: cfg.paymentRequired ?? false,
       amount: typeof cfg.signupFeeAmount === "number" ? cfg.signupFeeAmount / 100 : 0,
+    });
+
+    setSeekerFee({
+      enabled: cfg.seekerSignupFee?.enabled ?? false,
+      amount: typeof cfg.seekerSignupFee?.amount === "number" ? cfg.seekerSignupFee.amount / 100 : 0,
     });
 
     if (cfg.contactPacks) {
@@ -102,6 +108,17 @@ export default function AdminFees() {
         signupFeeAmount: Math.round(signupFee.amount * 100),
       }).unwrap();
       notify("Vendor signup fee saved.");
+    } catch {
+      notify("Failed to save.");
+    }
+  };
+
+  const saveSeekerFee = async () => {
+    try {
+      await updateConfig({
+        seekerSignupFee: { enabled: seekerFee.enabled, amount: Math.round(seekerFee.amount * 100) },
+      }).unwrap();
+      notify("Job seeker signup fee saved.");
     } catch {
       notify("Failed to save.");
     }
@@ -194,6 +211,41 @@ export default function AdminFees() {
                 value={signupFee.amount}
                 onChange={(e) => setSignupFee({ ...signupFee, amount: Number(e.target.value) })}
                 disabled={!signupFee.required}
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Job Seeker Signup Fee */}
+      <Section
+        title="Job Seeker Signup Fee"
+        description="Optional one-time fee charged to job seekers at signup. When enabled, seekers are prompted to pay; leave disabled for free seeker accounts."
+        onSave={saveSeekerFee}
+        saving={saving}
+      >
+        <div className="space-y-3 text-sm">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-4 h-4 accent-primary-600"
+              checked={seekerFee.enabled}
+              onChange={(e) => setSeekerFee({ ...seekerFee, enabled: e.target.checked })}
+            />
+            <span className="text-gray-700 font-medium">Charge job seekers a signup fee</span>
+          </label>
+          <div className="max-w-xs">
+            <label className="block text-gray-600 mb-1">Signup fee amount (₹)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2 text-gray-400">₹</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className={inputCls + " pl-7"}
+                value={seekerFee.amount}
+                onChange={(e) => setSeekerFee({ ...seekerFee, amount: Number(e.target.value) })}
+                disabled={!seekerFee.enabled}
               />
             </div>
           </div>

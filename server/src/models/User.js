@@ -59,6 +59,9 @@ const userSchema = new mongoose.Schema(
     // Seeker: bookmarked jobs
     savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job", index: true }],
 
+    // Seeker: whether the (optional) signup fee has been paid
+    signupFeePaid: { type: Boolean, default: false },
+
     // Vendor: contact credits for unlocking worker contact details
     contactCredits: { type: Number, default: 0, min: 0 },
 
@@ -95,6 +98,7 @@ userSchema.methods.toSafeJSON = function () {
     isVerified: this.isVerified,
     workerProfile: this.workerProfile,
     savedJobs: this.savedJobs,
+    signupFeePaid: this.signupFeePaid,
     contactCredits: this.contactCredits,
     subscription: this.subscription,
   };

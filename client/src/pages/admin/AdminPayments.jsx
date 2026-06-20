@@ -17,13 +17,30 @@ const STATUS_STYLES = {
   disputed: "bg-yellow-50 text-yellow-700",
 };
 
+const TYPE_LABELS = {
+  vendor_signup: "Vendor signup",
+  seeker_signup: "Seeker signup",
+  subscription: "Subscription",
+  contactPack: "Contact pack",
+};
+
+// A payment links to a vendor (org) or a user — show whichever applies.
+function payerOf(p) {
+  if (p.vendorId?.orgName) return { name: p.vendorId.orgName, sub: "Vendor" };
+  if (p.userId?.name || p.userId?.email) return { name: p.userId.name || p.userId.email, sub: p.userId.role || "User" };
+  return { name: "—", sub: "" };
+}
+
 export default function AdminPayments() {
   const [status, setStatus] = useState("");
+  const [type, setType] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("createdAt");
   const [page, setPage] = useState(1);
+  const [details, setDetails] = useState(null);
   const { data, isLoading } = useListAdminPaymentsQuery({
     status: status || undefined,
+    type: type || undefined,
     search: search || undefined,
     sort,
     page,
@@ -76,9 +93,16 @@ export default function AdminPayments() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
+            <select className={inputCls} value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
+              <option value="">All types</option>
+              <option value="vendor_signup">Vendor signup</option>
+              <option value="seeker_signup">Seeker signup</option>
+              <option value="subscription">Subscription</option>
+              <option value="contactPack">Contact pack</option>
+            </select>
             <select className={inputCls} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
               <option value="">All statuses</option>
-              <option value="created">Created</option>
+              <option value="created">Created (pending)</option>
               <option value="paid">Paid</option>
               <option value="failed">Failed</option>
               <option value="refunded">Refunded</option>
@@ -95,18 +119,24 @@ export default function AdminPayments() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left bg-primary-50 text-gray-700">
-              <th className="px-3 py-2 rounded-l-lg">Vendor</th>
+              <th className="px-3 py-2 rounded-l-lg">Type</th>
+              <th className="px-3 py-2">Payer</th>
               <th className="px-3 py-2">Amount</th>
               <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Order ID</th>
-              <th className="px-3 py-2">Notes</th>
+              <th className="px-3 py-2">Date</th>
               <th className="px-3 py-2 rounded-r-lg">Action</th>
             </tr>
           </thead>
           <tbody>
-            {!isLoading && data?.items?.map((p) => (
+            {!isLoading && data?.items?.map((p) => {
+              const payer = payerOf(p);
+              return (
               <tr key={p._id} className="border-b border-gray-100 align-top">
-                <td className="px-3 py-2 font-medium text-gray-900">{p.vendorId?.orgName}</td>
+                <td className="px-3 py-2 text-gray-700">{TYPE_LABELS[p.type] || p.type}</td>
+                <td className="px-3 py-2 font-medium text-gray-900">
+                  {payer.name}
+                  {payer.sub && <div className="text-xs text-gray-400 capitalize">{payer.sub}</div>}
+                </td>
                 <td className="px-3 py-2 text-gray-600">
                   ₹{(p.amount / 100).toFixed(2)}
                   {p.status === "refunded" && (
@@ -118,9 +148,16 @@ export default function AdminPayments() {
                     {p.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-xs text-gray-500 break-all">{p.razorpayOrderId}</td>
-                <td className="px-3 py-2 text-xs text-gray-500">{p.refundReason || p.notes || "—"}</td>
+                <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
+                  {p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-IN") : "—"}
+                </td>
                 <td className="px-3 py-2 space-y-1">
+                  <button
+                    onClick={() => setDetails(p)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-semibold block"
+                  >
+                    Details
+                  </button>
                   {p.status === "paid" && (
                     refundTarget === p._id ? (
                       <div className="space-y-1 min-w-[160px]">
@@ -171,10 +208,11 @@ export default function AdminPayments() {
                       Resolve (mark paid)
                     </button>
                   )}
-                  {!["paid", "disputed"].includes(p.status) && <span className="text-xs text-gray-400">—</span>}
+                  {!["paid", "disputed"].includes(p.status) && p.status !== "created" && <span className="text-xs text-gray-400">—</span>}
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {!isLoading && !data?.items?.length && (
               <tr>
                 <td colSpan={6} className="px-3 py-3 text-gray-500">No payments found.</td>
@@ -184,6 +222,37 @@ export default function AdminPayments() {
         </table>
         <Pagination page={page} pages={data?.pages} onChange={setPage} />
       </div>
+
+      {details && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setDetails(null)}>
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-900 text-lg">Payment details</h2>
+              <button onClick={() => setDetails(null)} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
+            </div>
+            <dl className="text-sm divide-y divide-gray-100">
+              {[
+                ["Type", TYPE_LABELS[details.type] || details.type],
+                ["Payer", payerOf(details).name + (payerOf(details).sub ? ` (${payerOf(details).sub})` : "")],
+                ["Amount", `₹${(details.amount / 100).toFixed(2)}`],
+                ["Status", details.status],
+                details.subscriptionPlan && ["Plan", details.subscriptionPlan],
+                details.contactPackKey && ["Pack", `${details.contactPackKey} (+${details.creditsAdded} credits)`],
+                details.status === "refunded" && ["Refunded", `₹${(details.refundAmount / 100).toFixed(2)}`],
+                details.refundReason && ["Refund reason", details.refundReason],
+                ["Order ID", details.razorpayOrderId],
+                ["Payment ID", details.razorpayPaymentId || "—"],
+                ["Created", details.createdAt ? new Date(details.createdAt).toLocaleString("en-IN") : "—"],
+              ].filter(Boolean).map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 py-1.5">
+                  <dt className="text-gray-500">{k}</dt>
+                  <dd className="text-gray-900 font-medium text-right break-all capitalize">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

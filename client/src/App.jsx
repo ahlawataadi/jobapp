@@ -4,10 +4,19 @@ import { useDispatch } from "react-redux";
 import { api } from "./api/axios.js";
 import { setCredentials, logout } from "./store/authSlice.js";
 import { useGetAdminConfigQuery } from "./store/jobsApi.js";
+import { applyTheme } from "./utils/applyTheme.js";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+
+function ThemeApplier() {
+  const { data } = useGetAdminConfigQuery();
+  useEffect(() => {
+    if (data?.config?.theme) applyTheme(data.config.theme);
+  }, [data]);
+  return null;
+}
 
 // Route components are code-split so the initial bundle stays small; the admin
 // area, charts, and editor only load when their route is actually visited.
@@ -44,6 +53,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.jsx"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions.jsx"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings.jsx"));
 const AdminPages = lazy(() => import("./pages/admin/AdminPages.jsx"));
+const AdminTheme = lazy(() => import("./pages/admin/AdminTheme.jsx"));
 const AdminBroadcastEmail = lazy(() => import("./pages/admin/AdminBroadcastEmail.jsx"));
 const AdminBroadcastSms = lazy(() => import("./pages/admin/AdminBroadcastSms.jsx"));
 const WorkerSearch = lazy(() => import("./pages/WorkerSearch.jsx"));
@@ -108,6 +118,7 @@ export default function App() {
     <ThemeProvider>
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <SiteMeta />
+      <ThemeApplier />
       <AnalyticsScript />
       <a
         href="#main-content"
@@ -234,6 +245,7 @@ export default function App() {
           <Route path="import" element={<AdminImport />} />
           <Route path="pages" element={<AdminPages />} />
           <Route path="fees" element={<AdminFees />} />
+          <Route path="theme" element={<AdminTheme />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="broadcasts/email" element={<AdminBroadcastEmail />} />
           <Route path="broadcasts/sms" element={<AdminBroadcastSms />} />

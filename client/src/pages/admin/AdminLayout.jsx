@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/admin/broadcasts/sms", label: "SMS Broadcast" },
   { to: "/admin/pages", label: "Pages" },
   { to: "/admin/fees", label: "Fees & Pricing" },
+  { to: "/admin/theme", label: "Theme" },
   { to: "/admin/settings", label: "Settings" },
 ];
 

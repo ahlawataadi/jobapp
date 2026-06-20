@@ -23,6 +23,8 @@ export const getAdminConfig = async (req, res, next) => {
       config: {
         paymentRequired: config.paymentRequired,
         signupFeeAmount: config.signupFeeAmount,
+        seekerSignupFee: config.seekerSignupFee,
+        theme: config.theme,
         analyticsScript: config.analyticsScript,
         siteName: config.siteName,
         siteTitle: config.siteTitle,
@@ -62,10 +64,24 @@ export const getAdminConfig = async (req, res, next) => {
 
 export const updateAdminConfig = async (req, res, next) => {
   try {
-    const { paymentRequired, signupFeeAmount, analyticsScript, siteName, siteTitle, metaDescription, aboutUs, contact, otpSettings, googleMapsApiKey } = req.body;
+    const { paymentRequired, signupFeeAmount, seekerSignupFee, theme, analyticsScript, siteName, siteTitle, metaDescription, aboutUs, contact, otpSettings, googleMapsApiKey } = req.body;
     const config = await getConfig();
 
     if (typeof paymentRequired === "boolean") config.paymentRequired = paymentRequired;
+    if (seekerSignupFee && typeof seekerSignupFee === "object") {
+      config.seekerSignupFee = {
+        enabled: typeof seekerSignupFee.enabled === "boolean" ? seekerSignupFee.enabled : config.seekerSignupFee?.enabled ?? false,
+        amount: typeof seekerSignupFee.amount === "number" && seekerSignupFee.amount >= 0 ? seekerSignupFee.amount : config.seekerSignupFee?.amount ?? 0,
+      };
+    }
+    if (theme && typeof theme === "object") {
+      config.theme = {
+        primaryColor: typeof theme.primaryColor === "string" ? theme.primaryColor : config.theme?.primaryColor || "#2563eb",
+        accentColor: typeof theme.accentColor === "string" ? theme.accentColor : config.theme?.accentColor || "#f97316",
+        fontFamily: typeof theme.fontFamily === "string" ? theme.fontFamily : config.theme?.fontFamily || "Inter",
+      };
+      config.markModified("theme");
+    }
     if (typeof signupFeeAmount === "number" && signupFeeAmount >= 0) {
       config.signupFeeAmount = signupFeeAmount;
     }
@@ -432,7 +448,11 @@ export const listPayments = async (req, res, next) => {
     const sortField = SORT_FIELDS[sort] || "createdAt";
     const sortDir = dir === "asc" ? 1 : -1;
 
-    let query = Payment.find(filter).populate("vendorId", "orgName district");
+    if (req.query.type) filter.type = req.query.type;
+
+    let query = Payment.find(filter)
+      .populate("vendorId", "orgName district")
+      .populate("userId", "name email role");
     if (search) {
       const re = new RegExp(search, "i");
       query = query.where({

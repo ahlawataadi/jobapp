@@ -427,6 +427,13 @@ export const jobsApi = createApi({
       query: ({ id, ...body }) => ({ url: `/admin/users/${id}/subscription`, method: "PATCH", body }),
       invalidatesTags: ["User"],
     }),
+    createSeekerSignupOrder: builder.mutation({
+      query: () => ({ url: "/payments/seeker-signup/create-order", method: "POST" }),
+    }),
+    verifySeekerSignup: builder.mutation({
+      query: (body) => ({ url: "/payments/seeker-signup/verify", method: "POST", body }),
+      invalidatesTags: ["Me"],
+    }),
     seedSampleBlogs: builder.mutation({
       query: () => ({ url: "/admin/blog/seed", method: "POST" }),
       invalidatesTags: ["Blog"],
@@ -544,6 +551,8 @@ export const {
   useImportBlogsMutation,
   useCreateSubscriptionOrderMutation,
   useVerifySubscriptionMutation,
+  useCreateSeekerSignupOrderMutation,
+  useVerifySeekerSignupMutation,
   useSetUserSubscriptionMutation,
   useUploadWorkerVideoMutation,
   useRemoveWorkerVideoMutation,

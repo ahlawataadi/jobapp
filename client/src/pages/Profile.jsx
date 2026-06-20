@@ -11,6 +11,7 @@ import {
   useUploadVendorLogoMutation,
   useRemoveVendorLogoMutation,
 } from "../store/jobsApi.js";
+import SeekerSignupFeePrompt from "../components/SeekerSignupFeePrompt.jsx";
 
 const inputCls =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none";
@@ -119,6 +120,8 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+
+      <SeekerSignupFeePrompt />
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-card">
         <h2 className="font-bold text-gray-900 mb-4">Profile picture</h2>
