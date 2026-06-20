@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/axios.js";
+import { setCredentials } from "../store/authSlice.js";
 import { useGetAdminConfigQuery } from "../store/jobsApi.js";
 
 const inputCls =
@@ -29,6 +31,7 @@ export default function Register() {
     }
   }, [emailEnabled, smsEnabled, form.phone]); // eslint-disable-line react-hooks/exhaustive-deps
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +39,14 @@ export default function Register() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/register", form);
+      if (data.verified) {
+        // Both OTP channels are disabled (or delivery wasn't possible) — the
+        // backend already activated the account, so log straight in instead
+        // of sending the user to a verify screen with nothing to verify.
+        dispatch(setCredentials({ user: data.user, accessToken: data.accessToken }));
+        navigate("/");
+        return;
+      }
       navigate("/verify-otp", { state: { userId: data.userId, channel: data.channel, devOtp: data.devOtp } });
     } catch (err) {
       setError(err?.response?.data?.message || "Registration failed");
