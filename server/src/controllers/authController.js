@@ -97,7 +97,7 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ message: "email and password are required" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+otpChannel");
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const ok = await user.comparePassword(password);
@@ -108,7 +108,12 @@ export const login = async (req, res, next) => {
     }
 
     if (!user.isVerified) {
-      const channel = await resolveOtpChannel(user.phone ? "phone" : "email", !!user.phone);
+      // Prefer the channel the account was originally sent a code on (set the
+      // first time generateAndSendOtp ran for this user) so login doesn't
+      // switch channels on them; only fall back to the phone/email heuristic
+      // for accounts that have never had a code sent yet.
+      const preferred = user.otpChannel || (user.phone ? "phone" : "email");
+      const channel = await resolveOtpChannel(preferred, !!user.phone);
       if (!channel) {
         user.isVerified = true;
         await user.save();
