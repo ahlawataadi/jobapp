@@ -111,6 +111,27 @@ Seed credentials: admin `admin@jobapp.local` / `ChangeMe123!`, demo vendors
 - **Geo features**: `Job` and `User.workerProfile` both carry a GeoJSON Point
   + 2dsphere index for radius search (`$near`); `Job`/text fields also carry a
   text index for search.
+- **OTP verification** (`server/src/utils/otp.js`, `authController.js`):
+  `resolveOtpChannel()` picks email vs. phone honoring `AdminConfig.otpSettings`
+  per-channel toggles, returning `null` if verification is disabled entirely
+  (account is then auto-activated). The channel actually used is persisted on
+  `User.otpChannel` so a later login/resend reuses the same channel instead of
+  switching on the user. Delivery failure (`sent: false`, e.g. SMTP/Twilio not
+  configured) must never auto-verify the account — that would let someone
+  sign up/log in with an email/phone they don't control. In non-production,
+  failed-delivery responses include `devOtp` so local testing works without a
+  real provider.
+- **Chat enforces the same paywall as contact-unlock**: `chatController.js`
+  regex-strips phone numbers/emails/WhatsApp-Telegram links from every message
+  body (`[contact removed]`) before saving. This exists so vendor↔seeker chat
+  can't be used to bypass paid contact-unlock credits — if you touch chat,
+  preserve the stripping rather than relaxing it.
+- **WhatsApp integration is stubbed, not wired in**: `whatsappController.js`
+  has a working inbound webhook (auto-replies "JOBS" with the 5 latest
+  listings) and a `broadcastJobToWorkers()` helper, but nothing in the job
+  creation flow (`jobController.js`/`adminController.js`) calls it yet — see
+  `FEATURES.md`'s WhatsApp section. Don't assume new jobs notify workers via
+  WhatsApp unless you've checked it's actually called.
 
 ## Conventions worth knowing before editing
 

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(pkill -f test-server.js)",
       "Bash(node src/scripts/test-server.js)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node --check src/controllers/authController.js)"
     ]
   }
 }

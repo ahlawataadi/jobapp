@@ -59,34 +59,31 @@ export const register = async (req, res, next) => {
 
     const channel = await resolveOtpChannel(preferredChannel, !!phone);
     if (!channel) {
-      // OTP verification disabled entirely — activate the account immediately.
+      // OTP verification disabled entirely (no channel to verify with) —
+      // activate the account, but still require an explicit login rather
+      // than handing out a token here. Signup must never itself log the
+      // user in; login is the only place that issues tokens post-signup.
       user.isVerified = true;
       await user.save();
-      const accessToken = await issueTokens(res, user);
       await logActivity(req, user, "signup");
-      return res.status(201).json({ user: user.toSafeJSON(), accessToken, verified: true });
+      return res.status(201).json({ verified: true, message: "Account created. Please log in to continue." });
     }
 
     await user.save();
     const { sent, code } = await generateAndSendOtp(user, channel);
 
-    if (!sent && process.env.NODE_ENV === "production") {
-      // Provider not configured: we can't deliver a code and must never leak it
-      // in the response. Activate the account instead of blocking signup.
-      user.isVerified = true;
-      await user.save();
-      const accessToken = await issueTokens(res, user);
-      await logActivity(req, user, "signup");
-      return res.status(201).json({ user: user.toSafeJSON(), accessToken, verified: true });
-    }
-
+    // Never auto-verify just because delivery failed — that would let anyone
+    // sign up with an email/phone they don't own. Leave the account
+    // unverified and let them retry via "Resend code" instead.
     const payload = {
       userId: user._id,
       channel,
-      message: `A verification code has been sent to your ${channel === "phone" ? "phone" : "email"}.`,
+      message: sent
+        ? `A verification code has been sent to your ${channel === "phone" ? "phone" : "email"}.`
+        : `We couldn't send a verification code right now. Please try "Resend code" in a few minutes, or contact support if this continues.`,
     };
     // Dev only: surface the code so local testing works without a real provider.
-    if (!sent) payload.devOtp = code;
+    if (!sent && process.env.NODE_ENV !== "production") payload.devOtp = code;
 
     res.status(201).json(payload);
   } catch (err) {
@@ -123,19 +120,19 @@ export const login = async (req, res, next) => {
         await user.save();
       } else {
         const { sent, code } = await generateAndSendOtp(user, channel);
-        if (sent || process.env.NODE_ENV !== "production") {
-          const payload = {
-            requiresVerification: true,
-            userId: user._id,
-            channel,
-            message: `Please verify your account. A code has been sent to your ${channel === "phone" ? "phone" : "email"}.`,
-          };
-          if (!sent) payload.devOtp = code; // dev only
-          return res.status(403).json(payload);
-        }
-        // Prod + can't deliver a code → activate and continue to log in.
-        user.isVerified = true;
-        await user.save();
+        // Never auto-verify just because delivery failed — that would let
+        // anyone log into an unverified account without ever proving they
+        // own the email/phone on file.
+        const payload = {
+          requiresVerification: true,
+          userId: user._id,
+          channel,
+          message: sent
+            ? `Please verify your account. A code has been sent to your ${channel === "phone" ? "phone" : "email"}.`
+            : `We couldn't send a verification code right now. Please try "Resend code" in a few minutes, or contact support if this continues.`,
+        };
+        if (!sent && process.env.NODE_ENV !== "production") payload.devOtp = code; // dev only
+        return res.status(403).json(payload);
       }
     }
 
@@ -192,14 +189,13 @@ export const resendOtp = async (req, res, next) => {
     const useChannel = resolved;
     const { sent, code } = await generateAndSendOtp(user, useChannel);
 
-    if (!sent && process.env.NODE_ENV === "production") {
-      user.isVerified = true;
-      await user.save();
-      return res.json({ message: "Verification could not be delivered; your account has been activated.", verified: true });
-    }
-
-    const payload = { message: `A new code has been sent to your ${useChannel === "phone" ? "phone" : "email"}.` };
-    if (!sent) payload.devOtp = code; // dev only
+    // Never auto-verify just because delivery failed — see register/login.
+    const payload = {
+      message: sent
+        ? `A new code has been sent to your ${useChannel === "phone" ? "phone" : "email"}.`
+        : `We couldn't send a verification code right now. Please try again in a few minutes, or contact support if this continues.`,
+    };
+    if (!sent && process.env.NODE_ENV !== "production") payload.devOtp = code; // dev only
     res.json(payload);
   } catch (err) {
     next(err);

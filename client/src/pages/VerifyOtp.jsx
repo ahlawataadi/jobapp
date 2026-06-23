@@ -49,12 +49,6 @@ export default function VerifyOtp() {
     setResending(true);
     try {
       const { data } = await api.post("/auth/resend-otp", { userId, channel });
-      if (data.verified) {
-        // Couldn't deliver a code, so the backend activated the account directly.
-        // resend-otp doesn't issue tokens, so send the user to log in instead.
-        navigate("/login", { state: { activated: true } });
-        return;
-      }
       setInfo(data.devOtp ? `Email/SMS not configured yet — using dev code: ${data.devOtp}` : data.message);
       if (data.devOtp) setCode(data.devOtp);
     } catch (err) {
